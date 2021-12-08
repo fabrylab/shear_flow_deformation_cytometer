@@ -99,7 +99,7 @@ class ResultCombiner:
         except AttributeError:
             pass
 
-        omega, mu1, eta1, k_cell, alpha_cell, epsilon = get_cell_properties(data)
+        get_cell_properties(data)
 
         output_file = Path(str(filename)[:-4] + self.output)
         output_config_file = Path(str(filename)[:-4] + self.output_config)

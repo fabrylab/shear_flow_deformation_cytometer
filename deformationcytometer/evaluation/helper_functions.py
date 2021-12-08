@@ -215,8 +215,6 @@ def get_cell_properties(data):
     data["k"] = w_k_cell
     data["alpha"] = w_alpha_cell
 
-    return omega, mu1, eta1, k_cell, alpha_cell, epsilon
-
 
 def match_cells_from_all_data(data, config, image_width=720):
     timestamps = {i: d.timestamp for i, d in data.groupby("frame").mean().iterrows()}

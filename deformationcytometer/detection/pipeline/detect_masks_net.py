@@ -38,6 +38,7 @@ class ProcessDetectMasksBatch:
         data_storage_numpy = self.data_storage.get_stored(block["data_info"])
         data_storage_mask_numpy = self.data_storage.get_stored(block["mask_info"])
 
+        import tensorflow as tf
         # initialize the unet if necessary
         im = data_storage_numpy[0]  # batch[0]["im"]
         if self.unet is None or self.unet.shape[:2] != im.shape:
@@ -57,8 +58,8 @@ class ProcessDetectMasksBatch:
         dt = time.time() - predict_start
         data_storage_mask_numpy[:] = prediction_mask_batch
 
-        import clickpoints
         if self.write_clickpoints_masks:
+            import clickpoints
             with clickpoints.DataFile(block["filename"][:-4] + ".cdb") as cdb:
                 # iterate over all images and return them
                 for mask, index in zip(data_storage_mask_numpy, range(block["index"], block["end_index"])):

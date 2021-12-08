@@ -16,7 +16,6 @@ class ProcessLoadImages:
         from deformationcytometer.detection import pipey
         from deformationcytometer.detection.includes.regionprops import preprocess, getTimestamp
         from deformationcytometer.includes.includes import getConfig
-        import clickpoints
         import numpy as np
 
         class reader2:
@@ -52,6 +51,7 @@ class ProcessLoadImages:
         image_count = len(reader)
 
         if self.write_clickpoints_file:
+            import clickpoints
             cdb = clickpoints.DataFile(filename[:-4]+".cdb", "w")
             cdb.setMaskType("prediction", color="#FF00FF", index=1)
 
