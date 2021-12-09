@@ -1,0 +1,46 @@
+[Default]
+version = 1
+
+[SETUP]
+pressure = 300 kPa
+channel width = 200 um
+channel length = 5.8 cm
+imaging position after inlet = 2.9
+bioink = alginate 2 pc
+room temperature = 25 C
+cell temperature = 25 deg C
+duration = 40.0 s
+
+[MICROSCOPE]
+microscope = Leica DM 6000
+objective = 40 x
+na = 0.6
+coupler = 0.543 x
+condensor aperture = 8
+
+[CAMERA]
+frame rate = 250 fps
+camera = Basler acA20-520
+camera pixel size = 6.9 um
+brightfield sn = 
+fluorescent sn = 
+external trigger = False
+
+[FLUORESCENT CHANNEL]
+exposure time = 1022 us
+gain = 25
+flip_x = True
+flip_y = True
+
+[BRIGHTFIELD CHANNEL]
+exposure time = 1460 us
+gain = 0
+flip_x = False
+flip_y = True
+
+[CELL]
+cell type = HL-60
+cell passage number = -
+time after harvest = -
+treatment = live/dead
+
