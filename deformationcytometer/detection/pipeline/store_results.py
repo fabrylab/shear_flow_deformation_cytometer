@@ -56,7 +56,7 @@ class ResultCombiner:
         import numpy as np
         import json
         from deformationcytometer.evaluation.helper_functions import correctCenter, filterCells, getStressStrain, \
-            apply_velocity_fit, get_cell_properties, match_cells_from_all_data
+            apply_velocity_fit, get_cell_properties, match_cells_from_all_data, add_units
 
         filename = block["filename"]
         image_width = block["data_info"]["shape"][2]
@@ -100,6 +100,8 @@ class ResultCombiner:
             pass
 
         get_cell_properties(data)
+
+        data = add_units(data, config)
 
         output_file = Path(str(filename)[:-4] + self.output)
         output_config_file = Path(str(filename)[:-4] + self.output_config)

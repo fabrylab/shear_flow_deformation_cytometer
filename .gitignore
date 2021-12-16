@@ -139,3 +139,6 @@ all_data.txt
 *.tmp
 /deformationcytometer/includes/form_factors.npy
 log_*.txt
+
+# sphinx build
+/docs/_build_html/

@@ -9,13 +9,14 @@ Original provided by
 '''
 import os
 import logging
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # FATAL
-logging.getLogger('tensorflow').setLevel(logging.FATAL)
+#os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # FATAL
+#logging.getLogger('tensorflow').setLevel(logging.FATAL)
 
 from tensorflow.keras import models
 from tensorflow.keras import layers
 from pathlib import Path
 import urllib.request
+import h5py
 
 weights_url = "https://github.com/fabrylab/Deformation_Cytometer/releases/download/v0.4/ImmuneNIH_20x_edgeOnly_2020_11_24.h5"
 
