@@ -13,7 +13,7 @@ The "Deformation Cytometer" addon has two main functions: It can display the raw
 
 To activate the addon, open a video file with ClickPoints and activate the "Deformation Cytometer" addon from the Add-on Browser (:numref:`fig_cp_addon` A 1, 2, 3). The addon searches for the output files of the deformation cytometer pipeline in the same folder as the video file. If these files exist, the addon will automatically display the elliptical outline of the detected cells in the ClickPoints main window (:numref:`fig_cp_addon` A 5).  Additionally, the addon can display scatter plots of cell strain and cell stress, irregularity and solidity, cell stiffness (k), cell fluidity (𝛼), as well as histograms of the stiffness and fluidity (:numref:`fig_cp_addon` B 5). These values can be calculated for a subset of cells that fulfill user-adjustable irregularity and solidity criteria of the elliptical fit to the detected cell contour.
 
-If the user clicks near or at a data point in a scatter plot, the clickpoints main window will automatically display the raw image, the neural network-segmented shape, the elliptical fit of the corresponding cells. The user is advised to spot check cells with high irregularity, low solidity or extreme positions in the stress-strain or stiffness-fluidity diagrams.
+If the user clicks near or at a data point in a scatter plot, the clickpoints main window will automatically display the raw image, the neural network-segmented shape of the corresponding cell, and the elliptical fit to the outline of the cell. The user is advised to spot-check cells with high irregularity, low solidity or extreme positions in the stress-strain or stiffness-fluidity diagrams.
 
 .. _fig_cp_addon:
 .. figure:: images/image9.jpg
