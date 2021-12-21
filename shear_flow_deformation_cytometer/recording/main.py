@@ -71,6 +71,7 @@ class InputSlideSpinSwitch(QtWidgets.QWidget):
 
 class Camera():
     camera = None
+    bimg = None
     mounted = False
     active = True
 
@@ -134,9 +135,8 @@ class Camera():
             else:
                 self.set_slave()
             self.mounted = True
-            print("mounted")
         except Exception as err:
-            print(err)
+            print(err, file=sys.stderr)
             self.sn.setStyleSheet('Background: rgb(255, 170, 127);')
             self.mounted = False
 
@@ -193,10 +193,10 @@ class Camera():
             bmetad = {'timestamp': str(btimestamp)}
             Btif.save(bimg, compression=0, metadata=bmetad, contiguous=False)
             if show:
-                self.pixmap.setPixmap(QtGui.QPixmap(array2qimage(bimg.T)))
+                self.pixmap.setPixmap(QtGui.QPixmap(array2qimage(bimg)))
 
     def update_hist(self):
-        if self.mounted is True:
+        if self.mounted is True and self.bimg is not None:
             self.hist.axes.clear()
             self.hist.axes.set_xlim([0 , 255])
             self.hist.axes.set_ylim([0 , 1.1])
@@ -208,10 +208,12 @@ class Camera():
             self.hist.axes.plot(x , y)
             self.hist.axes.fill_between(x , 0 , y , alpha=0.5)
             self.hist.draw()
-        if not self.exp.spin_box.isEnabled():
-            self.exp.spin_box.setValue(int(self.camera.ExposureTime.GetValue()))
-        if not self.gain.spin_box.isEnabled():
-            self.gain.spin_box.setValue(int (self.camera.Gain.GetValue()))
+
+        if self.mounted is True:
+            if not self.exp.spin_box.isEnabled():
+                self.exp.spin_box.setValue(int(self.camera.ExposureTime.GetValue()))
+            if not self.gain.spin_box.isEnabled():
+                self.gain.spin_box.setValue(int (self.camera.Gain.GetValue()))
 
     def update_view(self):
         if self.mounted:
@@ -226,7 +228,8 @@ class Camera():
                 bgrab = self.camera.RetrieveResult(3000, pylon.TimeoutHandling_Return)
                 if bgrab.GrabSucceeded():
                     self.bimg = bgrab.GetArray()
-                    self.pixmap.setPixmap(QtGui.QPixmap(array2qimage(self.bimg.T)))
+                    self.pixmap.setPixmap(QtGui.QPixmap(array2qimage(self.bimg)))
+                    self.view.setExtend(self.bimg.shape[1], self.bimg.shape[0])
                 bgrab.Release()
 
     ##function where repetetive camera settings is being applied. to avoid redundency in the code
@@ -393,7 +396,8 @@ class MainWindow(QtWidgets.QMainWindow):
         # self.ctext.appendPlainText(self.Dpath)
 
     def findCameras(self):
-
+        for cam in self.cameras:
+            cam.unmount()
         ## getting the list of connected camera's SN
         SN = []
         tl_factory = pylon.TlFactory.GetInstance()
@@ -403,6 +407,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.label_cams_found.setText(f"Cameras Found: {len(SN)}")
 
         #adding the serial numbers to list menus in ui
+        for i in range(self.brsn.count()):
+            self.brsn.removeItem(0)
+        for i in range(self.flsn.count()):
+            self.flsn.removeItem(0)
         self.brsn.addItems(SN)
         self.flsn.addItems(SN)
         if len(SN) > 1:
