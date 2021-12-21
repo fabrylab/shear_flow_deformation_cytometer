@@ -29,7 +29,7 @@ To analyse the evaluated data, this script example can serve as a starting point
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from deformationcytometer.evaluation.helper_functions import load_all_data_new, get2Dhist_k_alpha_err
+from shear_flow_deformation_cytometer.evaluation.helper_functions import load_all_data_new, get2Dhist_k_alpha_err
 
 # load all the data in the given folder
 # you can also add a list of folders instead

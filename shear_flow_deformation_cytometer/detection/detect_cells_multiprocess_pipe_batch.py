@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from deformationcytometer.detection.includes.pipe_helpers import *
+from shear_flow_deformation_cytometer.detection.includes.pipe_helpers import *
 
 #
 r_min = 6
@@ -24,8 +24,8 @@ from pipeline.store_results import ResultCombiner
 
 
 if __name__ == "__main__":
-    from deformationcytometer.detection import pipey
-    from deformationcytometer.includes.includes import getInputFile, read_args_pipeline, getInputFolder
+    from shear_flow_deformation_cytometer.detection import pipey
+    from shear_flow_deformation_cytometer.includes.includes import getInputFile, read_args_pipeline, getInputFolder
     import sys
     import multiprocessing
     import argparse

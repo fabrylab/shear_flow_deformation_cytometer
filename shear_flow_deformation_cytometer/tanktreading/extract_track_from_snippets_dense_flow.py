@@ -13,8 +13,8 @@ import pylustrator
 settings_name = "extract_track_from_snippets_dense_flow"
 np.seterr(divide='ignore', invalid='ignore')
 
-from deformationcytometer.includes.includes import getInputFile
-from deformationcytometer.evaluation.helper_functions import getStressStrain, getConfig
+from shear_flow_deformation_cytometer.includes.includes import getInputFile
+from shear_flow_deformation_cytometer.evaluation.helper_functions import getStressStrain, getConfig
 import skimage.registration
 import scipy.special
 

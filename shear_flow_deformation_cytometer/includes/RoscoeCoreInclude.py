@@ -4,7 +4,7 @@ from scipy.integrate import quad
 from scipy.optimize import root_scalar as fzero
 import scipy.integrate
 import scipy.optimize
-from deformationcytometer.includes.form_factors import getFormFactorFunctions
+from shear_flow_deformation_cytometer.includes.form_factors import getFormFactorFunctions
 
 def integral(*args):
     return quad(*args)[0]

@@ -1,9 +1,9 @@
-from deformationcytometer.detection.includes.pipe_helpers import *
+from shear_flow_deformation_cytometer.detection.includes.pipe_helpers import *
 
 
 class ProcessPairData:
     def __call__(self, block):
-        from deformationcytometer.detection.includes.regionprops import matchVelocities
+        from shear_flow_deformation_cytometer.detection.includes.regionprops import matchVelocities
 
         if block["type"] == "end" or block["type"] == "start":
             return block

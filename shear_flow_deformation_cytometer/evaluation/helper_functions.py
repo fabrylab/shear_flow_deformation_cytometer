@@ -138,7 +138,7 @@ def bootstrap_error(data, func=np.median, repetitions=1000):
     return np.nanstd(medians)
 
 
-from deformationcytometer.includes.fit_velocity import fit_velocity_pressures
+from shear_flow_deformation_cytometer.includes.fit_velocity import fit_velocity_pressures
 
 
 def apply_velocity_fit(data2):
@@ -160,7 +160,7 @@ def apply_velocity_fit(data2):
 
 def get_cell_properties(data):
     import scipy.special
-    from deformationcytometer.includes.RoscoeCoreInclude import getAlpha1, getAlpha2, getMu1, getEta1, eq41, \
+    from shear_flow_deformation_cytometer.includes.RoscoeCoreInclude import getAlpha1, getAlpha2, getMu1, getEta1, eq41, \
         getRoscoeStrain
 
     alpha1 = getAlpha1(data.long_axis / data.short_axis)
@@ -255,7 +255,7 @@ def get_mode(x):
 
 
 def get_mode_stats(x, do_plot=False):
-    from deformationcytometer.evaluation.helper_functions import bootstrap_error
+    from shear_flow_deformation_cytometer.evaluation.helper_functions import bootstrap_error
     from scipy import stats
 
     x = np.array(x)
@@ -388,8 +388,8 @@ def getGp1Gp2fit3_k_alpha(data):
 
 
 def stress_strain_fit(data, k_cell, alpha_cell):
-    from deformationcytometer.includes.RoscoeCoreInclude import getRatio
-    from deformationcytometer.includes.fit_velocity import getFitXYDot
+    from shear_flow_deformation_cytometer.includes.RoscoeCoreInclude import getRatio
+    from shear_flow_deformation_cytometer.includes.fit_velocity import getFitXYDot
     import scipy
     eta0 = data.iloc[0].eta0
     alpha = data.iloc[0].delta

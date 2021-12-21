@@ -1,4 +1,4 @@
-from deformationcytometer.detection.includes.pipe_helpers import *
+from shear_flow_deformation_cytometer.detection.includes.pipe_helpers import *
 
 
 class ResultCombiner:
@@ -55,7 +55,7 @@ class ResultCombiner:
         import pandas as pd
         import numpy as np
         import json
-        from deformationcytometer.evaluation.helper_functions import correctCenter, filterCells, getStressStrain, \
+        from shear_flow_deformation_cytometer.evaluation.helper_functions import correctCenter, filterCells, getStressStrain, \
             apply_velocity_fit, get_cell_properties, match_cells_from_all_data, add_units
 
         filename = block["filename"]

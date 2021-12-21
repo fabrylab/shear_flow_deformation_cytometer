@@ -4,7 +4,7 @@ import scipy.integrate
 from scipy import interpolate
 import numpy as np
 import matplotlib.pyplot as plt
-from deformationcytometer.includes.quad import quad, newton
+from shear_flow_deformation_cytometer.includes.quad import quad, newton
 
 
 def getVelocity(eta0, alpha, tau, H, W, P, L, x_sample=100):

@@ -1,4 +1,4 @@
-from deformationcytometer.detection.includes.pipe_helpers import *
+from shear_flow_deformation_cytometer.detection.includes.pipe_helpers import *
 
 
 class ProcessTankTreading:
@@ -6,7 +6,7 @@ class ProcessTankTreading:
         self.data_storage = data_storage
 
     def __call__(self, block):
-        from deformationcytometer.tanktreading.helpers import getCroppedImages, doTracking, CachedImageReader
+        from shear_flow_deformation_cytometer.tanktreading.helpers import getCroppedImages, doTracking, CachedImageReader
         import numpy as np
         import pandas as pd
         pd.options.mode.chained_assignment = 'raise'

@@ -1,4 +1,4 @@
-from deformationcytometer.detection.includes.pipe_helpers import *
+from shear_flow_deformation_cytometer.detection.includes.pipe_helpers import *
 
 
 class ProcessLoadImages:
@@ -13,9 +13,9 @@ class ProcessLoadImages:
         """
         import imageio
         import sys
-        from deformationcytometer.detection import pipey
-        from deformationcytometer.detection.includes.regionprops import preprocess, getTimestamp
-        from deformationcytometer.includes.includes import getConfig
+        from shear_flow_deformation_cytometer.detection import pipey
+        from shear_flow_deformation_cytometer.detection.includes.regionprops import preprocess, getTimestamp
+        from shear_flow_deformation_cytometer.includes.includes import getConfig
         import numpy as np
 
         class reader2:
@@ -125,9 +125,9 @@ class ProcessLoadImagesClickpoints:
         """
         import imageio
         import sys
-        from deformationcytometer.detection import pipey
-        from deformationcytometer.detection.includes.regionprops import preprocess, getTimestamp
-        from deformationcytometer.includes.includes import getConfig
+        from shear_flow_deformation_cytometer.detection import pipey
+        from shear_flow_deformation_cytometer.detection.includes.regionprops import preprocess, getTimestamp
+        from shear_flow_deformation_cytometer.includes.includes import getConfig
         import clickpoints
         import numpy as np
 
@@ -214,9 +214,9 @@ class ProcessLoadImagesClickpointsAndMasks:
         """
         import imageio
         import sys
-        from deformationcytometer.detection import pipey
-        from deformationcytometer.detection.includes.regionprops import preprocess, getTimestamp
-        from deformationcytometer.includes.includes import getConfig
+        from shear_flow_deformation_cytometer.detection import pipey
+        from shear_flow_deformation_cytometer.detection.includes.regionprops import preprocess, getTimestamp
+        from shear_flow_deformation_cytometer.includes.includes import getConfig
         import clickpoints
         import numpy as np
 

@@ -7,7 +7,7 @@ from typing import Union, List
 import numpy as np
 import pandas as pd
 
-from deformationcytometer.includes.includes import getConfig
+from shear_flow_deformation_cytometer.includes.includes import getConfig
 
 path_string = Union[str, Path]
 

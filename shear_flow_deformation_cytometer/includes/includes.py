@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 import tqdm
 import argparse
-from deformationcytometer.detection.includes.UNETmodel import weights_url
+from shear_flow_deformation_cytometer.detection.includes.UNETmodel import weights_url
 class Dialog(QFileDialog):
     def __init__(self, title="open file", filetype="", mode="file", settings_name="__"):
         super().__init__()

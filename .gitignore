@@ -137,7 +137,7 @@ dmypy.json
 # script output
 all_data.txt
 *.tmp
-/deformationcytometer/includes/form_factors.npy
+/shear_flow_deformation_cytometer/includes/form_factors.npy
 log_*.txt
 
 # sphinx build

@@ -1,4 +1,4 @@
-from deformationcytometer.detection.includes.pipe_helpers import *
+from shear_flow_deformation_cytometer.detection.includes.pipe_helpers import *
 
 class ProcessFindCells:
     def __init__(self, irregularity_threshold, solidity_threshold, data_storage, r_min, write_clickpoints_markers, hollow_masks=True):
@@ -14,8 +14,8 @@ class ProcessFindCells:
         predict_start_first = time.time()
         import pandas as pd
         from pathlib import Path
-        from deformationcytometer.detection.includes.regionprops import mask_to_cells_edge, mask_to_cells_edge2
-        from deformationcytometer.evaluation.helper_functions import filterCells
+        from shear_flow_deformation_cytometer.detection.includes.regionprops import mask_to_cells_edge, mask_to_cells_edge2
+        from shear_flow_deformation_cytometer.evaluation.helper_functions import filterCells
         import numpy as np
 
         output_path = Path(block["filename"][:-4] + "_result_new.csv")

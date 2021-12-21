@@ -20,7 +20,7 @@ class FileFinished: pass
 def to_filelist(paths, reevaluate=False):
     import glob
     from pathlib import Path
-    from deformationcytometer.includes.includes import getConfig
+    from shear_flow_deformation_cytometer.includes.includes import getConfig
 
     if not isinstance(paths, list):
         paths = [paths]
@@ -53,7 +53,7 @@ class get_items:
         self.reevaluate = reevaluate
 
     def __call__(self, d):
-        from deformationcytometer.detection import pipey
+        from shear_flow_deformation_cytometer.detection import pipey
         d = to_filelist(d, self.reevaluate)
         for x in d:
             yield x

@@ -27,9 +27,9 @@ import pandas as pd
 from scipy.ndimage import shift
 import skimage.registration
 
-from deformationcytometer.includes.includes import getInputFile, read_args_tank_treading
-from deformationcytometer.evaluation.helper_functions import getConfig, getData, getVelocity, correctCenter
-from deformationcytometer.evaluation.helper_functions import fit_func_velocity
+from shear_flow_deformation_cytometer.includes.includes import getInputFile, read_args_tank_treading
+from shear_flow_deformation_cytometer.evaluation.helper_functions import getConfig, getData, getVelocity, correctCenter
+from shear_flow_deformation_cytometer.evaluation.helper_functions import fit_func_velocity
 import scipy as sp
 import scipy.optimize
 import tifffile

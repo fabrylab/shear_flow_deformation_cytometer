@@ -1,4 +1,4 @@
-from deformationcytometer.detection.includes.pipe_helpers import *
+from shear_flow_deformation_cytometer.detection.includes.pipe_helpers import *
 
 
 class ProcessCopyImages:
@@ -10,9 +10,9 @@ class ProcessCopyImages:
         Loads an .tif file stack and yields all the images.
         """
         import imageio
-        from deformationcytometer.detection import pipey
-        from deformationcytometer.detection.includes.regionprops import preprocess, getTimestamp
-        from deformationcytometer.includes.includes import getConfig
+        from shear_flow_deformation_cytometer.detection import pipey
+        from shear_flow_deformation_cytometer.detection.includes.regionprops import preprocess, getTimestamp
+        from shear_flow_deformation_cytometer.includes.includes import getConfig
         from pathlib import Path
         import clickpoints
         import numpy as np

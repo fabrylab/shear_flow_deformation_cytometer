@@ -1,4 +1,4 @@
-from deformationcytometer.detection.includes.pipe_helpers import *
+from shear_flow_deformation_cytometer.detection.includes.pipe_helpers import *
 
 
 
@@ -20,7 +20,7 @@ class ProcessDetectMasksBatchCanny:
     def __call__(self, block):
         import time
         predict_start_first = time.time()
-        from deformationcytometer.detection.includes.UNETmodel import UNet
+        from shear_flow_deformation_cytometer.detection.includes.UNETmodel import UNet
         import numpy as np
         import cv2
         from skimage.filters import gaussian
@@ -28,7 +28,7 @@ class ProcessDetectMasksBatchCanny:
         from skimage import feature
         from scipy.ndimage import generate_binary_structure, binary_fill_holes
         from skimage import morphology
-        from deformationcytometer.detection.includes.regionprops import preprocess, getTimestamp
+        from shear_flow_deformation_cytometer.detection.includes.regionprops import preprocess, getTimestamp
 
         if block["type"] == "start" or block["type"] == "end":
             yield block

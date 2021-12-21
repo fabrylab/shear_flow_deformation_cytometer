@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.stats import gaussian_kde
-from deformationcytometer.includes.fit_velocity import getFitXY
+from shear_flow_deformation_cytometer.includes.fit_velocity import getFitXY
 
 
 def plot_density_scatter(x, y, cmap='viridis', alpha=1, skip=1, y_factor=1, s=5, levels=None, loglog=False, ax=None):
