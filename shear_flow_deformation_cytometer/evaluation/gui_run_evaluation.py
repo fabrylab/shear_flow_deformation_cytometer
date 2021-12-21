@@ -3,8 +3,7 @@ import sys
 # Setting the Qt bindings for QtPy
 import qtawesome as qta
 from qtpy import QtCore, QtWidgets, QtGui
-from gui import QtShortCuts
-
+from shear_flow_deformation_cytometer.gui import QtShortCuts
 
 """ some magic to prevent PyQt5 from swallowing exceptions """
 # Back up the reference to the exceptionhook

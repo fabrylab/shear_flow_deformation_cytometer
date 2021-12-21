@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1295</width>
-    <height>720</height>
+    <width>300</width>
+    <height>800</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -36,33 +36,7 @@
        <number>5</number>
       </property>
       <item row="0" column="0">
-       <layout class="QHBoxLayout" name="horizontalLayout_8">
-        <item>
-         <widget class="ImageView" name="brview" native="true">
-          <property name="minimumSize">
-           <size>
-            <width>0</width>
-            <height>300</height>
-           </size>
-          </property>
-          <property name="styleSheet">
-           <string notr="true">background-color: rgb(0, 0, 0);</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="ImageView" name="flview" native="true">
-          <property name="minimumSize">
-           <size>
-            <width>0</width>
-            <height>300</height>
-           </size>
-          </property>
-          <property name="styleSheet">
-           <string notr="true">background-color: rgb(0, 0, 0);</string>
-          </property>
-         </widget>
-        </item>
+       <layout class="QHBoxLayout" name="layout_views">
        </layout>
       </item>
       <item row="1" column="0">
@@ -75,6 +49,37 @@
           <property name="spacing">
            <number>0</number>
           </property>
+          <item>
+           <layout class="QHBoxLayout" name="brlay2">
+            <item>
+                <widget class="QLabel" name="label">
+                 <property name="text">
+                  <string>Brightfield Camera SN:</string>
+                 </property>
+                </widget>
+               </item>
+            <item>
+              <widget class="QComboBox" name="brsn">
+                 <property name="minimumSize">
+                  <size>
+                   <width>90</width>
+                   <height>23</height>
+                  </size>
+                 </property>
+                 <property name="maximumSize">
+                  <size>
+                   <width>90</width>
+                   <height>16777215</height>
+                  </size>
+                 </property>
+                 <property name="styleSheet">
+                  <string notr="true"/>
+                 </property>
+                </widget>
+            </item>
+           </layout>
+
+          </item>
           <item>
            <widget class="QGroupBox" name="brexpbox">
             <property name="title">
@@ -247,6 +252,32 @@
                  </property>
                 </widget>
                </item>
+               <item row="0" column="0">
+                <widget class="QLabel" name="label_cams_found">
+                 <property name="minimumSize">
+                  <size>
+                   <width>150</width>
+                   <height>0</height>
+                  </size>
+                 </property>
+                 <property name="text">
+                  <string>Cameras Found: 0</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="0" column="1">
+                <widget class="QPushButton" name="button_find_cams">
+                 <property name="minimumSize">
+                  <size>
+                   <width>0</width>
+                   <height>23</height>
+                  </size>
+                 </property>
+                 <property name="text">
+                  <string>update</string>
+                 </property>
+                </widget>
+               </item>
                <item row="1" column="0">
                 <widget class="QLabel" name="label_2">
                  <property name="minimumSize">
@@ -256,52 +287,12 @@
                   </size>
                  </property>
                  <property name="text">
-                  <string>Fluorescence Camera SN:</string>
+                  <string>Two Camera Mode:</string>
                  </property>
                 </widget>
                </item>
-               <item row="0" column="0">
-                <widget class="QLabel" name="label">
-                 <property name="text">
-                  <string>Brightfield Camera SN:</string>
-                 </property>
-                </widget>
-               </item>
-               <item row="0" column="1">
-                <widget class="QComboBox" name="brsn">
-                 <property name="minimumSize">
-                  <size>
-                   <width>90</width>
-                   <height>23</height>
-                  </size>
-                 </property>
-                 <property name="maximumSize">
-                  <size>
-                   <width>90</width>
-                   <height>16777215</height>
-                  </size>
-                 </property>
-                 <property name="styleSheet">
-                  <string notr="true"/>
-                 </property>
-                </widget>
-               </item>
-               <item row="1" column="1">
-                <widget class="QComboBox" name="flsn">
-                 <property name="minimumSize">
-                  <size>
-                   <width>90</width>
-                   <height>23</height>
-                  </size>
-                 </property>
-                 <property name="maximumSize">
-                  <size>
-                   <width>90</width>
-                   <height>16777215</height>
-                  </size>
-                 </property>
-                </widget>
-               </item>
+
+
                <item row="3" column="1">
                 <widget class="QSpinBox" name="frate">
                  <property name="minimumSize">
@@ -1187,10 +1178,44 @@ color: rgb(255, 255, 255);</string>
          </spacer>
         </item>
         <item>
+         <widget class="QWidget" name="fl_props">
          <layout class="QVBoxLayout" name="fllay">
           <property name="spacing">
            <number>0</number>
           </property>
+          <item>
+           <layout class="QHBoxLayout" name="fllay0">
+           <item>
+                <widget class="QLabel" name="label_2">
+                 <property name="minimumSize">
+                  <size>
+                   <width>150</width>
+                   <height>0</height>
+                  </size>
+                 </property>
+                 <property name="text">
+                  <string>Fluorescence Camera SN:</string>
+                 </property>
+                </widget>
+               </item>
+           <item>
+                <widget class="QComboBox" name="flsn">
+                 <property name="minimumSize">
+                  <size>
+                   <width>90</width>
+                   <height>23</height>
+                  </size>
+                 </property>
+                 <property name="maximumSize">
+                  <size>
+                   <width>90</width>
+                   <height>16777215</height>
+                  </size>
+                 </property>
+                </widget>
+               </item>
+           </layout>
+          </item>
           <item>
            <widget class="QGroupBox" name="flexpbox">
             <property name="title">
@@ -1320,6 +1345,7 @@ color: rgb(255, 255, 255);</string>
            </spacer>
           </item>
          </layout>
+         </widget>
         </item>
        </layout>
       </item>

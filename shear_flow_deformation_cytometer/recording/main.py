@@ -5,6 +5,7 @@ from SwitchButton import SwitchButton
 from pypylon import pylon
 
 import numpy as np
+from pathlib import Path
 import tifffile
 import sys
 import os
@@ -22,6 +23,10 @@ from datetime import datetime
 import ctypes
 myappid = 'FAU.BaslerTwoCamera' # arbitrary string
 ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
+
+from shear_flow_deformation_cytometer.gui.QExtendedGraphicsView import QExtendedGraphicsView
+from qimage2ndarray import array2qimage
+from pyqtgraph import ImageView
 
 
 # this is the class which produces the graphs needed for histogram
@@ -55,10 +60,19 @@ class InputSlideSpinSwitch(QtWidgets.QWidget):
     def value(self):
         return self.spin_box.value()
 
+    def show(self):
+        for widget in [self.slider, self.spin_box, self.switch]:
+            widget.show()
+
+    def hide(self):
+        for widget in [self.slider, self.spin_box, self.switch]:
+            widget.hide()
+
 
 class Camera():
     camera = None
     mounted = False
+    active = True
 
     def __init__(self, parent, exp, gain, hist, view, sn, flip, master):
         self.parent = parent
@@ -70,13 +84,27 @@ class Camera():
         self.flip = flip
         self.master = master
 
-        ## adjusting some parameters of the imageview from pyqtgraph module
-        self.view.ui.histogram.hide()
-        self.view.ui.roiBtn.hide()
-        self.view.ui.menuBtn.hide()
+        self.pixmap = QtWidgets.QGraphicsPixmapItem(self.view.origin)
 
         self.parent.timer.timeout.connect(self.update_view)
         self.parent.htimer.timeout.connect(self.update_hist)
+
+    def set_active(self, active):
+        self.active = active
+        widgets = [self.view, self.hist, self.exp, self.gain, self.sn, self.parent.fl_props]
+        for widget in widgets:
+            if active:
+                widget.show()
+            else:
+                widget.hide()
+
+    def unmount(self):
+        try:  # try to close if it is already open
+            self.camera.Close()
+        except:
+            pass
+
+        self.mounted = False
 
     def mount(self):
         if self.camera is not None:
@@ -113,6 +141,8 @@ class Camera():
             self.mounted = False
 
     def live(self):
+        if not self.active:
+            return
         if self.mounted is False:
             self.mount()
         try:
@@ -131,6 +161,8 @@ class Camera():
         self.camera.StartGrabbing(pylon.GrabStrategy_LatestImageOnly)
 
     def prepare_rec(self):
+        if not self.active:
+            return
         if self.mounted is False:
             self.mount()
         try:
@@ -152,6 +184,8 @@ class Camera():
         self.camera.StartGrabbing(pylon.GrabStrategy_OneByOne)
 
     def rec_image(self, Btif, show=False):
+        if self.mounted is False:
+            return
         bgrab = self.camera.RetrieveResult(3000, pylon.TimeoutHandling_Return)
         if bgrab.GrabSucceeded():
             bimg = bgrab.GetArray()
@@ -159,7 +193,7 @@ class Camera():
             bmetad = {'timestamp': str(btimestamp)}
             Btif.save(bimg, compression=0, metadata=bmetad, contiguous=False)
             if show:
-                self.view.setImage(bimg.T, autoRange=False, autoLevels=False, levels=(0, 255))
+                self.pixmap.setPixmap(QtGui.QPixmap(array2qimage(bimg.T)))
 
     def update_hist(self):
         if self.mounted is True:
@@ -192,7 +226,7 @@ class Camera():
                 bgrab = self.camera.RetrieveResult(3000, pylon.TimeoutHandling_Return)
                 if bgrab.GrabSucceeded():
                     self.bimg = bgrab.GetArray()
-                    self.view.setImage(self.bimg.T, autoRange=False, autoLevels=False, levels=(0, 255))
+                    self.pixmap.setPixmap(QtGui.QPixmap(array2qimage(self.bimg.T)))
                 bgrab.Release()
 
     ##function where repetetive camera settings is being applied. to avoid redundency in the code
@@ -255,7 +289,7 @@ class MainWindow(QtWidgets.QMainWindow):
         super(MainWindow, self).__init__(*args, **kwargs)
         self.setWindowIcon(QtGui.QIcon('images/icon.png')) #window icon
         self.ui = uic.loadUi('twoCamera.ui', self) #loads the ui from .ui file
-        self.setWindowTitle('Shear Flow Cytometer Recording') #window name
+        self.setWindowTitle('Shear Flow Deformation Cytometer Recording') #window name
 
         ## botton icons and styling
         self.counter.setAlignment(QtCore.Qt.AlignCenter)
@@ -271,13 +305,20 @@ class MainWindow(QtWidgets.QMainWindow):
 
         ## making the graphs for histograms and placing them inside window
         self.brhist = MplCanvas(self, width=4, height=2.5, dpi=70)
-        self.brlay.insertWidget(2, self.brhist)
+        self.brlay.insertWidget(3, self.brhist)
 
         self.flhist = MplCanvas(self, width=4, height=2.5, dpi=70)
         self.fllay.insertWidget(3, self.flhist)
 
         self.timer = QtCore.QTimer(self)
         self.htimer = QtCore.QTimer(self)
+
+        self.brview = QExtendedGraphicsView()
+        self.brview.setMinimumHeight(300)
+        self.layout_views.addWidget(self.brview)
+
+        self.flview = QExtendedGraphicsView()
+        self.layout_views.addWidget(self.flview)
 
         self.cameras = [
             Camera(self,
@@ -300,23 +341,19 @@ class MainWindow(QtWidgets.QMainWindow):
             )
         ]
 
+        self.twoCamSwitch = SwitchButton(self, 'On', 10, 'Off', 31, 60)
+        self.cameraPar.addWidget(self.twoCamSwitch, 1, 1)
+        self.twoCamSwitch.toggled.connect(self.TwoCamMode)
+        self.TwoCamMode(False)
+
         ## making external switch botton
         self.exTswitch = SwitchButton(self, 'On', 10, 'Off', 31, 60)
-        self.cameraPar.addWidget(self.exTswitch , 2,1)
+        self.cameraPar.addWidget(self.exTswitch, 2, 1)
         
-        self.exTswitch.toggled.connect(lambda c: self.ETrig(c))
+        self.exTswitch.toggled.connect(self.ETrig)
 
-        ## getting the list of connected camera's SN
-        SN = []
-        tl_factory = pylon.TlFactory.GetInstance()
-        devices = tl_factory.EnumerateDevices()
-        for device in devices:
-            SN.append( device.GetSerialNumber() ) 
-
-        #adding the serial numbers to list menus in ui
-        self.brsn.addItems(SN)
-        self.flsn.addItems(SN)
-        self.flsn.setCurrentIndex(1) #poiting the fl to the second camera SN to avoid both pointing to the same camera
+        self.button_find_cams.clicked.connect(self.findCameras)
+        self.findCameras()
 
         ## reading default config file
         self.conf = config.SetupConfig('config.txt') #config has it's own class
@@ -354,6 +391,26 @@ class MainWindow(QtWidgets.QMainWindow):
                 lines = Notes.read()
                 self.Notes.append(lines)
         # self.ctext.appendPlainText(self.Dpath)
+
+    def findCameras(self):
+
+        ## getting the list of connected camera's SN
+        SN = []
+        tl_factory = pylon.TlFactory.GetInstance()
+        devices = tl_factory.EnumerateDevices()
+        for device in devices:
+            SN.append( device.GetSerialNumber() )
+        self.label_cams_found.setText(f"Cameras Found: {len(SN)}")
+
+        #adding the serial numbers to list menus in ui
+        self.brsn.addItems(SN)
+        self.flsn.addItems(SN)
+        if len(SN) > 1:
+            self.flsn.setCurrentIndex(1) #poiting the fl to the second camera SN to avoid both pointing to the same camera
+            self.twoCamSwitch.setEnabled(True)
+        else:
+            self.TwoCamMode(False)
+            self.twoCamSwitch.setEnabled(False)
 
     ## stop either the live view or the recording   
     def Stop(self):
@@ -413,8 +470,13 @@ class MainWindow(QtWidgets.QMainWindow):
     ## funcation which runs the loop which saves the recording to the storage
     def Save(self):
         path = self.spath.text()
-        self.brpath = filename.Bpath(path)
-        self.flpath = filename.Fpath(path)
+        Path(path).mkdir(parents=True, exist_ok=True)
+        if self.cameras[1].active:
+            self.brpath = filename.path(path, "")
+            self.flpath = filename.path(path, "_Fl")
+        else:
+            self.brpath = filename.path(path, "")
+            self.flpath = None
         frate = self.frate.value()
         fnum = self.fnum.value()
 
@@ -425,6 +487,8 @@ class MainWindow(QtWidgets.QMainWindow):
 
         if self.cameras[1].mounted:
             Ftif = tifffile.TiffWriter(self.flpath, bigtiff=True)
+        else:
+            Ftif = None
         if self.cameras[0].mounted:
             Btif = tifffile.TiffWriter(self.brpath, bigtiff=True)
         ran = np.arange(1 , fnum+1)
@@ -455,6 +519,14 @@ class MainWindow(QtWidgets.QMainWindow):
         self.conf.save(self)
         self.SaveNote()
         # self.pbar.setValue(200)
+
+    def TwoCamMode(self, t):
+        self.cameras[1].set_active(t)
+        if t is False:
+            self.cameras[1].unmount()
+        else:
+            if self.isStopped is False:
+                self.cameras[1].live()
 
     ## function to enable and diable the external trigger. takes bolean as argument
     def ETrig(self, t):

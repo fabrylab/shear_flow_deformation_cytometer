@@ -22,7 +22,7 @@ import imageio
 from qimage2ndarray import array2qimage
 import matplotlib.pyplot as plt
 import yaml
-import QExtendedGraphicsView
+from shear_flow_deformation_cytometer.gui.QExtendedGraphicsView import QExtendedGraphicsView
 
 from shear_flow_deformation_cytometer.evaluation.helper_functions import getMeta, load_all_data_new, plot_velocity_fit, plotDensityScatter, plot_density_hist, plotBinnedData, stress_strain_fit, get2Dhist_k_alpha, getGp1Gp2fit_k_alpha, getGp1Gp2fit3_k_alpha, get2Dhist_k_alpha
 
