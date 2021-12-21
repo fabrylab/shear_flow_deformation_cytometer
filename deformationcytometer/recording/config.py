@@ -45,10 +45,6 @@ class SetupConfig():
 		self.brgain = int(section['gain'])
 		self.brXflip = json.loads(section['flip_x'].lower())
 		self.brYflip = json.loads(section['flip_y'].lower())
-		
-
-
-
 
 	def update(self, main):
 		main.frate.setValue(self.frate)
@@ -109,8 +105,6 @@ class SetupConfig():
 
 		self.brsn = main.brsn.currentText()
 		self.flsn = main.flsn.currentText()
-
-
 
 		self.con['SETUP']['pressure'] = str(self.pressure) + ' kPa'
 		self.con['SETUP']['imaging position after inlet'] = self.imPos
