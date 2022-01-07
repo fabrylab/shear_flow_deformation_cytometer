@@ -35,7 +35,7 @@ def to_filelist(paths, reevaluate=False):
             files.extend(glob.glob(path + "/**/*.tif", recursive=True))
     files2 = []
     for filename in files:
-        if reevaluate or not Path(str(filename)[:-4] + "_evaluated_config_new.txt").exists():
+        if reevaluate or not Path(str(filename)[:-4] + "_evaluated.csv").exists():
             # check if the config file exists
             try:
                 config = getConfig(filename)

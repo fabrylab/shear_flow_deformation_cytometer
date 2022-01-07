@@ -20,6 +20,7 @@ from pipeline.find_cells import ProcessFindCells
 from pipeline.velocity import ProcessPairData
 from pipeline.tank_treading import ProcessTankTreading
 from pipeline.store_results import ResultCombiner
+from distutils.util import strtobool
 
 
 
@@ -38,7 +39,7 @@ if __name__ == "__main__":
     parser.add_argument('-n', '--network_weight', default="", help='provide an external the network weight file')
     parser.add_argument('-r', '--irregularity_filter', type=float, default=1.06, help='cells with larger irregularity (deviation from elliptical shape) are excluded')
     parser.add_argument('-s', '--solidity_filter', type=float, default=0.96, help='cells with smaller solidity are excluded')
-    parser.add_argument('-f', '--force', type=bool, default=True, help='if True reevaluate already evaluated files')
+    parser.add_argument('-f', '--force', default=True, help='if True reevaluate already evaluated files')
     parser.add_argument('--rmin', type=float, default=r_min, help='cells smaller than rmin are excluded')
     args = parser.parse_args()
 
@@ -46,6 +47,7 @@ if __name__ == "__main__":
     network_weight = args.network_weight
     irregularity_threshold = args.irregularity_filter
     solidity_threshold = args.solidity_filter
+    force = strtobool(args.force)
     print(f'run evaluation on {file} using {network_weight} filtering irr {irregularity_threshold} and sol {solidity_threshold}')
     clear_logs()
 
@@ -56,7 +58,7 @@ if __name__ == "__main__":
     pipeline = pipey.Pipeline(3)
 
     if 1:
-        pipeline.add(get_items(args.force))
+        pipeline.add(get_items(force))
 
         if copy_images is True:
             pipeline.add(ProcessCopyImages(data_storage))
