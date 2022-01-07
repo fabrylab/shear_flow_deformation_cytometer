@@ -18,7 +18,7 @@ class ProcessFindCells:
         from shear_flow_deformation_cytometer.evaluation.helper_functions import filterCells
         import numpy as np
 
-        output_path = Path(block["filename"][:-4] + "_result_new.csv")
+        #output_path = Path(block["filename"][:-4] + "_result_new.csv")
 
         if block["type"] != "image":
             if block["type"] == "start":
@@ -28,8 +28,8 @@ class ProcessFindCells:
                     with clickpoints.DataFile(block["filename"][:-4] + ".cdb") as cdb:
                         cdb.setMarkerType("cell", "#FF0000", mode=cdb.TYPE_Ellipse)
                 # delete an existing outputfile
-                if output_path.exists():
-                    output_path.unlink()
+                #if output_path.exists():
+                #    output_path.unlink()
             return block
 
         data_storage_mask_numpy = self.data_storage.get_stored(block["mask_info"])
@@ -48,12 +48,12 @@ class ProcessFindCells:
                                           "long_axis_px", "short_axis_px",
                                           "angle", "irregularity", "solidity", "velocity", "cell_id"])
 
-        if not output_path.exists():
-            with output_path.open("w") as fp:
-                new_cells.to_csv(fp, index=False, header=True)
-        else:
-            with output_path.open("a") as fp:
-                new_cells.to_csv(fp, index=False, header=False)
+        #if not output_path.exists():
+        #    with output_path.open("w") as fp:
+        #        new_cells.to_csv(fp, index=False, header=True)
+        #else:
+        #    with output_path.open("a") as fp:
+        #        new_cells.to_csv(fp, index=False, header=False)
 
         # filter cells according to solidity and irregularity
         new_cells = filterCells(new_cells, solidity_threshold=self.solidity_threshold,
