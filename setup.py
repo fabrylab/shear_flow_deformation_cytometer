@@ -25,5 +25,6 @@ setup(name='shear_flow_deformation_cytometer',
             "h5py",
             "pint",
             "pint_pandas",
+            "pyQt5"
       ],
 )
