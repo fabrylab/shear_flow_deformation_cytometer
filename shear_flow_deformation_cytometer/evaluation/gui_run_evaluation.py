@@ -1,9 +1,9 @@
 import sys
-
+from pathlib import Path
 # Setting the Qt bindings for QtPy
 import qtawesome as qta
 from qtpy import QtCore, QtWidgets, QtGui
-from shear_flow_deformation_cytometer.gui import QtShortCuts
+from shear_flow_deformation_cytometer.evaluation.gui import QtShortCuts
 from collections import defaultdict
 
 """ some magic to prevent PyQt5 from swallowing exceptions """
@@ -45,13 +45,12 @@ class MainWindow(QtWidgets.QWidget):
             self.force = QtShortCuts.QInputBool("Force reevaluation",False,tooltip=tooltip_strings["force"])
             self.button_run = QtShortCuts.QPushButton("run", self.run)
 
-
     def run(self):
         import subprocess
         window.close()
         subprocess.run([
             sys.executable,
-            '../detection/detect_cells_multiprocess_pipe_batch.py',
+            Path(__file__).parent / '../detection/detect_cells_multiprocess_pipe_batch.py',
             self.input.value(),
             "-n", self.network.value(),
             "-r", str(self.irregularity_threshold.value()),
@@ -60,16 +59,20 @@ class MainWindow(QtWidgets.QWidget):
             "-f", str(self.force.value())
         ])
 
-
-if __name__ == '__main__':
+def main():
     app = QtWidgets.QApplication(sys.argv)
     # set an application id, so that windows properly stacks them in the task bar
     if sys.platform[:3] == 'win':
         import ctypes
-        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('fabrybiophysics.deformationcytometer_browser')  # arbitrary string
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(
+            'fabrybiophysics.deformationcytometer_browser')  # arbitrary string
     print(sys.argv)
     window = MainWindow()
     if len(sys.argv) >= 2:
         window.loadFile(sys.argv[1])
     window.show()
     sys.exit(app.exec_())
+
+
+if __name__ == '__main__':
+    main()
