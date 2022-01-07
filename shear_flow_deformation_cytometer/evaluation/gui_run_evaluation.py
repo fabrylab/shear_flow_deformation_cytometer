@@ -3,7 +3,7 @@ from pathlib import Path
 # Setting the Qt bindings for QtPy
 import qtawesome as qta
 from qtpy import QtCore, QtWidgets, QtGui
-from shear_flow_deformation_cytometer.evaluation.gui import QtShortCuts
+from shear_flow_deformation_cytometer.gui import QtShortCuts
 from collections import defaultdict
 
 """ some magic to prevent PyQt5 from swallowing exceptions """
@@ -47,7 +47,7 @@ class MainWindow(QtWidgets.QWidget):
 
     def run(self):
         import subprocess
-        window.close()
+        self.close()
         subprocess.run([
             sys.executable,
             Path(__file__).parent / '../detection/detect_cells_multiprocess_pipe_batch.py',
