@@ -388,7 +388,7 @@ class QInputColor(QInput):
 class QInputFilename(QInput):
     last_folder = None
 
-    def __init__(self, name=None, value=None, dialog_title="Choose File", file_type="All", filename_checker=None, existing=False, allow_edit=False, **kwargs):
+    def __init__(self, name=None, value=None, dialog_title="Choose File", file_type="", filename_checker=None, existing=False, allow_edit=False, **kwargs):
         # initialize the super widget
         QInput.__init__(self, name, **kwargs)
 
