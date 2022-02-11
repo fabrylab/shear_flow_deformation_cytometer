@@ -105,9 +105,12 @@ def fit_func_velocity_gradient(config):
 
 
 def correctCenter(data, config):
-    if not "velocity" in data:
-        getVelocity(data, config)
+    # remove nans
     d = data[np.isfinite(data.velocity)]
+    # remove outlier points
+    d = d[d.velocity < np.nanpercentile(d.velocity, 95) * 1.5]
+    d = d[d.velocity > 0]
+
     y_pos = d.radial_position
     vel = d.velocity
 
