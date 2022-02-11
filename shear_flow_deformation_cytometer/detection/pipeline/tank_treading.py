@@ -33,7 +33,7 @@ class ProcessTankTreading:
             cells2 = cells.iloc[row_indices[i+1]:row_indices[i+2]]
 
             for i, (index, d2) in enumerate(cells2.iterrows()):
-                if np.isnan(d2.velocity):
+                if np.isnan(d2.measured_velocity):
                     continue
                 try:
                     d1 = cells1[cells1.cell_id == d2.cell_id].iloc[0]

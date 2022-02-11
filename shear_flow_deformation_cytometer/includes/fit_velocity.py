@@ -96,7 +96,7 @@ def fit_velocity(data, config, p=None, channel_width=None):
     P = config["pressure_pa"]
     L = config["channel_length_m"]
 
-    x, y = data.radial_position * 1e-6, data.velocity * 1e-3
+    x, y = data.radial_position * 1e-6, data.measured_velocity * 1e-3
     i = np.isfinite(x) & np.isfinite(y)
     x2 = x[i]
     y2 = y[i]
@@ -124,7 +124,7 @@ def fit_velocity_pressures(data, config, p=None, channel_width=None, pressures=N
         W = channel_width
     L = config["channel_length_m"]
 
-    x, y = data.radial_position * 1e-6, data.velocity * 1e-3
+    x, y = data.radial_position * 1e-6, data.measured_velocity * 1e-3
     i = np.isfinite(x) & np.isfinite(y)
     x2 = x[i]
     y2 = y[i]

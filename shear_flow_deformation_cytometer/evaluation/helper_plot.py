@@ -117,7 +117,7 @@ def plot_velocity_fit(data, color=None):
         for p in d.index.unique():
             dd = d.loc[p]
             x, y = getFitLine(pressure, p)
-            line, = plt.plot(np.abs(dd.radial_position), dd.velocity * 1e-3 * 1e2, "o", alpha=0.3, ms=2, color=color)
+            line, = plt.plot(np.abs(dd.radial_position), dd.measured_velocity * 1e-3 * 1e2, "o", alpha=0.3, ms=2, color=color)
             plt.plot([], [], "o", ms=2, color=line.get_color(), label=f"{pressure:.1f}")
             l, = plt.plot(x[x >= 0] * 1e+6, y[x >= 0] * 1e2, color="k")
             maxima.append(np.nanmax(y[x > 0] * 1e2))

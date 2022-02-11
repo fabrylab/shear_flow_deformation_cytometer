@@ -42,8 +42,8 @@ def getVelocity(data: pd.DataFrame, config: dict):
                     velocity_partner[
                         i] = f"{i}, {i + j}, {dt}, {data.x[i + j] - data.x[i]}, {data.frame[i]}, {data.long_axis[i]}, {data.short_axis[i]} -> {data.frame[i + j]}, {data.long_axis[i + j]}, {data.short_axis[i + j]}"
                     cell_id[i + j] = cell_id[i]
-    data["velocity"] = velocities
-    data["velocity_partner"] = velocity_partner
+    data["measured_velocity"] = velocities
+    data["measured_velocity_partner"] = velocity_partner
     data["cell_id"] = cell_id
 
 
@@ -106,13 +106,13 @@ def fit_func_velocity_gradient(config):
 
 def correctCenter(data, config):
     # remove nans
-    d = data[np.isfinite(data.velocity)]
+    d = data[np.isfinite(data.measured_velocity)]
     # remove outlier points
-    d = d[d.velocity < np.nanpercentile(d.velocity, 95) * 1.5]
-    d = d[d.velocity > 0]
+    d = d[d.measured_velocity < np.nanpercentile(d.measured_velocity, 95) * 1.5]
+    d = d[d.measured_velocity > 0]
 
     y_pos = d.radial_position
-    vel = d.velocity
+    vel = d.measured_velocity
 
     if len(vel) == 0:
         raise ValueError("No velocity values found.")
@@ -150,7 +150,7 @@ def apply_velocity_fit(data2):
     eta0, delta, tau = p0
     eta = eta0 / (1 + tau ** delta * np.abs(vel_grad) ** delta)
 
-    data2["vel_fit_error"] = np.sqrt(np.sum(((vel - data2.velocity) / data2.velocity) ** 2))
+    data2["vel_fit_error"] = np.sqrt(np.sum(((vel - data2.measured_velocity) / data2.measured_velocity) ** 2))
 
     data2["vel"] = vel
     data2["vel_grad"] = vel_grad

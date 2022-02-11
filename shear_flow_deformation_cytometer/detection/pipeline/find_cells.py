@@ -46,7 +46,7 @@ class ProcessFindCells:
                                  columns=["frame", "timestamp", "x", "y", "radial_position",
                                           "long_axis", "short_axis",
                                           "long_axis_px", "short_axis_px",
-                                          "angle", "irregularity", "solidity", "velocity", "cell_id"])
+                                          "angle", "irregularity", "solidity", "measured_velocity", "cell_id"])
 
         #if not output_path.exists():
         #    with output_path.open("w") as fp:

@@ -175,7 +175,7 @@ with open(target_folder / "output.csv", "w") as fp:
 
             if 0:
                 plt.subplot(121)
-                plt.plot(data.rp*1e-6, data.velocity*1e-3, "o")
+                plt.plot(data.rp*1e-6, data.measured_velocity*1e-3, "o")
                 vel = fit_func_velocity(config)
                 dx = 1
                 x = np.arange(-100, 100, dx)*1e-6
@@ -192,7 +192,7 @@ with open(target_folder / "output.csv", "w") as fp:
 
             if i == 0:
                 fp.write(f"""i,id,index,x,y,rp,long_axis,short_axis,angle,irregularity,solidity,sharpness,timestamp,velocity,grad\n""")
-            fp.write(f"""{i},{cell.cell_id},{index},{cell.x+shifts[index][0]},{cell.y+shifts[index][1]},{rp},{cell.long_axis},{cell.short_axis},{cell.angle},{cell.irregularity},{cell.solidity},{cell.sharpness},{cell.timestamp},{cell.velocity},{grad}\n""")
+            fp.write(f"""{i},{cell.cell_id},{index},{cell.x+shifts[index][0]},{cell.y+shifts[index][1]},{rp},{cell.long_axis},{cell.short_axis},{cell.angle},{cell.irregularity},{cell.solidity},{cell.sharpness},{cell.timestamp},{cell.measured_velocity},{grad}\n""")
 
             i += 1
             print(id, cell)

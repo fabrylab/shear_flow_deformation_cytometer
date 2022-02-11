@@ -325,7 +325,7 @@ def matchVelocities(last_frame_cells, new_cells, next_cell_id, config):
                 c2 = last_frame_cells.iloc[j]
                 dt = c1.timestamp - c2.timestamp
                 v = (c1.x - c2.x) * config["pixel_size"] / dt
-                new_cells.iat[i, new_cells.columns.get_loc("velocity")] = v
+                new_cells.iat[i, new_cells.columns.get_loc("measured_velocity")] = v
                 new_cells.iat[i, new_cells.columns.get_loc("cell_id")] = c2.cell_id
             else:
                 new_cells.iat[i, new_cells.columns.get_loc("cell_id")] = next_cell_id
