@@ -75,7 +75,7 @@ if __name__ == "__main__":
         pipeline.add(ProcessLoadImagesClickpointsAndMasks(data_storage, batch_size=batch_size, type="mask"))
 
     # One process combines the results into a file.
-    pipeline.add(ProcessFindCells(irregularity_threshold, solidity_threshold, data_storage, r_min=r_min, write_clickpoints_markers=write_clickpoints_file and write_clickpoints_markers, hollow_masks=True), 1)
+    pipeline.add(ProcessFindCells(irregularity_threshold, solidity_threshold, data_storage, r_min=args.rmin, write_clickpoints_markers=write_clickpoints_file and write_clickpoints_markers, hollow_masks=True), 1)
 
     pipeline.add(ProcessPairData())
 
