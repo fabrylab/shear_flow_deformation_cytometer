@@ -38,7 +38,7 @@ class MainWindow(QtWidgets.QWidget):
 
         with QtShortCuts.QVBoxLayout(self):
             self.input = QtShortCuts.QInputFolder(name = 'Input folder   ',settings=self.settings, settings_key="evaluate_folder",tooltip=tooltip_strings["choose folder"])
-            self.network = QtShortCuts.QInputFilename(name='Network (.h5)',settings=self.settings, settings_key="custom_network",tooltip=tooltip_strings["choose file"])
+            self.network = QtShortCuts.QInputFilename(name='Network (.h5)',settings=self.settings, settings_key="custom_network",tooltip=tooltip_strings["choose file"], existing=True)
             self.irregularity_threshold = QtShortCuts.QInputNumber('irregularity', 1.06, settings=self.settings, settings_key="irregularity_threshold",tooltip=tooltip_strings["irregularity"])
             self.solidity_threshold = QtShortCuts.QInputNumber('solidity', 0.96, settings=self.settings, settings_key="solidity_threshold",tooltip=tooltip_strings["solidity"])
             self.r_min = QtShortCuts.QInputNumber('r_min', 6, settings=self.settings, settings_key="r_min",tooltip=tooltip_strings["r_min"])
