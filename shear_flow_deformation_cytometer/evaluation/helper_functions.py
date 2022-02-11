@@ -420,3 +420,52 @@ def stress_strain_fit(data, k_cell, alpha_cell):
     ratio, alpha1, alpha2, strain, stress, theta, ttfreq, eta, vdot = getRatio(eta0, alpha, tau, vel_grad, mu1_, eta1_)
 
     return stress, strain
+
+
+def add_units(data, config):
+    units = {
+        "timestamp": "ms",
+        # "datetime": "dimensionless",
+        # "time_after_harvest": "min",
+        "frame": "frame",
+        "x": "cam_pixel",
+        "y": "cam_pixel",
+        "rp": "µm",
+        "long_axis": "µm",
+        "short_axis": "µm",
+        "angle": "deg",
+        "irregularity": "dimensionless",
+        "solidity": "dimensionless",
+        "sharpness": "dimensionless",
+        "velocity": "mm/s",
+        "cell_id": "dimensionless",
+        "tt": "rad/s",
+        "tt_r2": "dimensionless",
+        "omega": "rad/s",
+        "velocity_gradient": "1/s",
+        "velocity_fitted": "mm/s",
+        "imaging_pos_mm": "mm",
+        "stress": "Pa",
+        "stress_center": "Pa",
+        "strain": "dimensionless",
+        "area": "µm**2",
+        "pressure": "bar",
+        "vel": "m/s",
+        "vel_grad": "1/s",
+        "eta": "Pa*s",
+        "eta0": "Pa*s",
+        "delta": "dimensionless",
+        "tau": "s",
+        "mu1": "Pa",
+        "eta1": "Pa*s",
+        "Gp1": "Pa",
+        "Gp2": "Pa",
+        "k_cell": "Pa",
+        "alpha_cell": "dimensionless",
+        "epsilon": "dimensionless",
+        "w_Gp1": "Pa",
+        "w_Gp2": "Pa",
+        "w_k_cell": "Pa",
+        "w_alpha_cell": "dimensionless",
+    }
+    return pd.DataFrame(data.values, columns=[list(data.columns), [units[col] if col in units else "" for col in data.columns]])
