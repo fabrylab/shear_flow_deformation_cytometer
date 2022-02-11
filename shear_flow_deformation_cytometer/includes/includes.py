@@ -1,5 +1,6 @@
 import configparser
 import copy
+import json
 import os
 import sys
 from pathlib import Path
@@ -150,6 +151,8 @@ def getConfig(configfile):
     configfile = str(configfile)
     if configfile.endswith("_result.txt"):
         configfile = configfile.replace("_result.txt", "_config.txt")
+    if configfile.endswith("_evaluated.csv"):
+        configfile = configfile.replace("_evaluated.csv", "_evaluated.json")
     if configfile.endswith("_evaluated_new.csv"):
         configfile = configfile.replace("_evaluated_new.csv", "_config.txt")
     if configfile.endswith(".tif"):
@@ -158,6 +161,10 @@ def getConfig(configfile):
         configfile = configfile.replace("_addon_evaluated.csv", "_addon_config.txt")
     if not Path(configfile).exists():
         raise IOError(f"Config file {configfile} does not exist.")
+
+    if configfile.endswith(".json"):
+        with open(configfile) as fp:
+            return json.load(fp)
 
     config = configparser.ConfigParser()
     config.read(configfile)
