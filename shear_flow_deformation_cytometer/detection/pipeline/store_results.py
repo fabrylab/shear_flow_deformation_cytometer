@@ -69,19 +69,8 @@ class ResultCombiner:
         config = file["config"]
 
         # find the center of the channel with a rough velocity fit
-        try:
-            correctCenter(data, config)
-        except Exception as err:
-            print("WARNING: could not fit center for", filename, err)
+        correctCenter(data, config)
 
-        if 0:
-            try:
-                # take the mean of all values of each cell
-                data = data.groupby(['cell_id'], as_index=False).mean()
-            except pd.core.base.DataError:
-                pass
-
-        # data = filterCells(data, config)
         # reset the indices
         data.reset_index(drop=True, inplace=True)
 
