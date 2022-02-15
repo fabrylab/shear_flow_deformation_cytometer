@@ -57,6 +57,7 @@ class ResultCombiner:
         import json
         from shear_flow_deformation_cytometer.evaluation.helper_functions import correctCenter, filterCells, getStressStrain, \
             apply_velocity_fit, get_cell_properties, match_cells_from_all_data, add_units
+        from shear_flow_deformation_cytometer.evaluation.overview_plot import overview_plot
 
         filename = block["filename"]
         image_width = block["data_info"]["shape"][2]
@@ -78,7 +79,7 @@ class ResultCombiner:
 
         data["area"] = data.long_axis * data.short_axis * np.pi
         data["pressure"] = config["pressure_pa"] * 1e-5
-
+        data.to_csv(r"\\131.188.117.96\biophysDS2\nstroehlein\bloodcells\2021.11.02\1.5 percent alginate\0.2 bar\tmp.csv")
         # apply the shear thinning velocity fit
         data, p = apply_velocity_fit(data)
 
@@ -90,6 +91,8 @@ class ResultCombiner:
             pass
 
         get_cell_properties(data)
+
+        overview_plot(filename, data)
 
         data = add_units(data, config)
 
