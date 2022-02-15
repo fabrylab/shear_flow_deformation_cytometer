@@ -140,7 +140,10 @@ def fit_velocity_pressures(data, config, p=None, channel_width=None, pressures=N
     def getAllCost(p):
         cost = 0
         for P in fit_pressures:
-            cost += np.sum((getFitFunc(x2[press2==P], p[0], p[1], p[2], H, W, P*1e5, L, x_sample) - y2[press2==P]) ** 2)
+            c = (getFitFunc(x2[press2 == P], p[0], p[1], p[2], H, W, P*1e5, L, x_sample) - y2[press2 == P]) ** 2
+            # clip cost for possible outliers
+            c = np.clip(c, 0, np.percentile(c, 95))
+            cost += np.sum(c)
         return cost
 
     if p is None:
