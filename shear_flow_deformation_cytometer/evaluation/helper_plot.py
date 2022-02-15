@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.stats import gaussian_kde
+from shear_flow_deformation_cytometer.evaluation.helper_functions import bootstrap_error
 from shear_flow_deformation_cytometer.includes.fit_velocity import getFitXY
 
 
@@ -127,6 +128,7 @@ def plot_velocity_fit(data, color=None):
         pass
     plt.xlabel("position in channel (µm)")
     plt.ylabel("velocity (cm/s)")
+    plt.ylim(bottom=0)
 
 
 def plot_density_hist(x, orientation='vertical', do_stats=True, only_kde=False, ax=None, bins=50, **kwargs):
