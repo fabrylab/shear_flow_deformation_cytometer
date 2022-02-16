@@ -306,15 +306,15 @@ def matchVelocities(last_frame_cells, new_cells, next_cell_id, config):
     if len(last_frame_cells) != 0 and len(new_cells) != 0:
         conditions = (
             # radial pos
-                (np.abs(np.array(last_frame_cells.radial_position)[:, None] - np.array(new_cells.radial_position)[None, :]) < 1) &
-                # long_axis
-                (np.abs(np.array(last_frame_cells.long_axis)[:, None] - np.array(new_cells.long_axis)[None, :]) < 1) &
-                # short axis
-                (np.abs(np.array(last_frame_cells.short_axis)[:, None] - np.array(new_cells.short_axis)[None, :]) < 1) &
-                # angle
-                (np.abs(np.array(last_frame_cells.angle)[:, None] - np.array(new_cells.angle)[None, :]) < 5) &
-                # positive velocity
-                (np.abs(np.array(last_frame_cells.x)[:, None] < np.array(new_cells.x)[None, :]))  # &
+            (np.abs(np.array(last_frame_cells.radial_position)[:, None] - np.array(new_cells.radial_position)[None, :]) < 1) &
+            # long_axis
+            (np.abs(np.array(last_frame_cells.long_axis)[:, None] - np.array(new_cells.long_axis)[None, :]) < 1) &
+            # short axis
+            (np.abs(np.array(last_frame_cells.short_axis)[:, None] - np.array(new_cells.short_axis)[None, :]) < 1) &
+            # angle
+            (np.abs(np.array(last_frame_cells.angle)[:, None] - np.array(new_cells.angle)[None, :]) < 5) &
+            # positive velocity
+            (np.abs(np.array(last_frame_cells.x)[:, None] < np.array(new_cells.x)[None, :]))  # &
         )
         indices = np.argmax(conditions, axis=0)
         found = conditions[indices, np.arange(conditions.shape[1])]
@@ -324,9 +324,14 @@ def matchVelocities(last_frame_cells, new_cells, next_cell_id, config):
                 c1 = new_cells.iloc[i]
                 c2 = last_frame_cells.iloc[j]
                 dt = c1.timestamp - c2.timestamp
-                v = (c1.x - c2.x) * config["pixel_size"] / dt
-                new_cells.iat[i, new_cells.columns.get_loc("measured_velocity")] = v
-                new_cells.iat[i, new_cells.columns.get_loc("cell_id")] = c2.cell_id
+                # prevent division by zeros
+                if dt > 1e-9:
+                    v = (c1.x - c2.x) * config["pixel_size"] / dt
+                    new_cells.iat[i, new_cells.columns.get_loc("measured_velocity")] = v
+                    new_cells.iat[i, new_cells.columns.get_loc("cell_id")] = c2.cell_id
+                else:
+                    new_cells.iat[i, new_cells.columns.get_loc("cell_id")] = next_cell_id
+                    next_cell_id += 1
             else:
                 new_cells.iat[i, new_cells.columns.get_loc("cell_id")] = next_cell_id
                 next_cell_id += 1
