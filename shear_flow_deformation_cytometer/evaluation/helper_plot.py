@@ -1,3 +1,5 @@
+import sys
+
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.stats import gaussian_kde
@@ -18,10 +20,14 @@ def plot_density_scatter(x, y, cmap='viridis', alpha=1, skip=1, y_factor=1, s=5,
         xy = np.vstack([np.log10(x), np.log10(y)])
     else:
         xy = np.vstack([x, y * y_factor])
-    kde = gaussian_kde(xy)
-    kd = kde(xy)
-    idx = kd.argsort()
-    x, y, z = x[idx], y[idx], kd[idx]
+    try:
+        kde = gaussian_kde(xy)
+        kd = kde(xy)
+        idx = kd.argsort()
+        x, y, z = x[idx], y[idx], kd[idx]
+    except ValueError as err:
+        print(err, file=sys.stderr)
+        z = np.ones_like(x)
     ax.scatter(x, y, c=z, s=s, alpha=alpha, cmap=cmap)  # plot in kernel density colors e.g. viridis
 
     if levels != None:
