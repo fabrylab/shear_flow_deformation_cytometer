@@ -47,6 +47,8 @@ class ProcessLoadImages:
             return
         # get the config file
         config = getConfig(filename)
+        # framerate
+        dt = 1 / config["frame_rate"]
         # get the total image count
         image_count = len(reader)
 
@@ -77,6 +79,7 @@ class ProcessLoadImages:
             if timestamp_start is None:
                 timestamp_start = timestamp
             timestamp -= timestamp_start
+            timestamp = np.round(timestamp / (dt * 1e3)) * dt * 1e3
 
             if self.write_clickpoints_file:
                 cdb.setImage(filename, frame=image_index)#, timestamp=timestamp)

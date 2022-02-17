@@ -193,6 +193,8 @@ def getConfig(configfile):
     config_data["channel_length_m"] = float(config['SETUP']['channel length'].split()[0]) * 1e-2
 
     config_data["cell_treatment"] = config['CELL']['treatment']
+
+    config_data["frame_rate"] = float(config['CAMERA']['frame rate'].split()[0])
     return config_data
 
 
