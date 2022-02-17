@@ -1,6 +1,8 @@
 from PyQt5 import uic
 from PyQt5 import QtWidgets, QtCore, QtGui
-from SwitchButton import SwitchButton
+from shear_flow_deformation_cytometer.recording.switch_button import SwitchButton
+from shear_flow_deformation_cytometer.recording import config
+from shear_flow_deformation_cytometer.recording import filename
 
 from pypylon import pylon
 
@@ -13,11 +15,10 @@ import threading
 
 import matplotlib
 import matplotlib.pyplot as plt
+
 matplotlib.use('Qt5Agg')
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 
-import config
-import filename
 from datetime import datetime
 
 from shear_flow_deformation_cytometer.gui.QExtendedGraphicsView import QExtendedGraphicsView
@@ -39,18 +40,28 @@ class MplCanvas(FigureCanvas):
 
 
 class InputSlideSpinSwitch(QtWidgets.QWidget):
-    def __init__(self, parent, brexpslide, brexpspin, brexplay):
+    def __init__(self, parent, slider, spinbox, layout):
         super().__init__(parent)
-        brexpslide.valueChanged.connect(brexpspin.setValue)
-        brexpspin.valueChanged.connect(brexpslide.setValue)
+        slider.valueChanged.connect(spinbox.setValue)
+        spinbox.valueChanged.connect(slider.setValue)
 
-        brexpswitch = SwitchButton(self, '', 15, '', 31, 50)
-        brexplay.insertWidget(0, brexpswitch)
+        switch = SwitchButton(self, '', 15, '', 31, 50)
+        layout.insertWidget(0, switch)
 
-        self.toggled = brexpswitch.toggled
-        self.slider = brexpslide
-        self.spin_box = brexpspin
-        self.switch = brexpswitch
+        self.toggled = switch.toggled
+        self.slider = slider
+        self.spin_box = spinbox
+        self.switch = switch
+
+        self.switch.toggled.connect(self.set_auto)
+
+    def set_auto(self, auto):
+        if auto is True:
+            self.slider.setEnabled(False)
+            self.spin_box.setEnabled(False)
+        else:
+            self.slider.setEnabled(True)
+            self.spin_box.setEnabled(True)
 
     def value(self):
         return self.spin_box.value()
@@ -76,14 +87,21 @@ class Camera(QtCore.QObject):
     signal_display = QtCore.Signal(np.ndarray)
     signal_finished_recording = QtCore.Signal()
 
-    def __init__(self, parent, exp, gain, hist, view, sn, flip, master):
+    def __init__(self, parent, layout, layout_views, exp, gain, sn, flip, master):
         super().__init__()
+        # making the graphs for histograms and placing them inside window
+        self.hist = MplCanvas(self, width=4, height=2.5, dpi=70)
+        layout.insertWidget(3, self.hist)
+
+        self.view = QExtendedGraphicsView()
+        self.view.setMinimumHeight(300)
+        layout_views.addWidget(self.view)
+
         self.record_thread = None
         self.parent = parent
         self.exp = exp
         self.gain = gain
-        self.hist = hist
-        self.view = view
+
         self.sn = sn
         self.flip = flip
         self.master = master
@@ -114,7 +132,7 @@ class Camera(QtCore.QObject):
 
     def mount(self):
         if self.camera is not None:
-            try: #try to close if it is already open
+            try:  # try to close if it is already open
                 self.camera.Close()
             except:
                 pass
@@ -185,14 +203,16 @@ class Camera(QtCore.QObject):
         if self.master is True:
             self.camera.LineSource.SetValue("ExposureActive")
 
+    def record_start(self, output_path, frame_rate, total_frame_number, sk, callback_end=None, callback_frame=None):
+        self.record_do_stop = False
+        self.record_thread = threading.Thread(target=self.record_sequence_thread, args=(
+        output_path, frame_rate, total_frame_number, sk, callback_end, callback_frame))
+
     def record_stop(self):
         self.record_do_stop = True
 
-    def record_sequence(self, output_path, frame_rate, total_frame_number, sk, callback_end=None, callback_frame=None):
-        self.record_do_stop = False
-        self.record_thread = threading.Thread(target=self.record_sequence_thread, args=(output_path, frame_rate, total_frame_number, sk, callback_end, callback_frame))
-
-    def record_sequence_thread(self, output_path, frame_rate, total_frame_number, sk, callback_end, callback_frame=None):
+    def record_sequence_thread(self, output_path, frame_rate, total_frame_number, sk, callback_end,
+                               callback_frame=None):
         self.is_recording = True
         tif_writer = tifffile.TiffWriter(output_path, bigtiff=True)
         try:
@@ -210,7 +230,7 @@ class Camera(QtCore.QObject):
                     if timestamp_start is None:
                         timestamp_start = timestamp
                     # round the timestamp to the nearest frame number
-                    frame_number = np.round((timestamp - timestamp_start)/dt + 0.5)
+                    frame_number = np.round((timestamp - timestamp_start) / dt + 0.5)
 
                     # if we missed some frames, fill them up with black frames
                     while current_frame_number < frame_number and current_frame_number < total_frame_number:
@@ -239,8 +259,8 @@ class Camera(QtCore.QObject):
     def update_hist(self):
         if self.mounted is True and self.img is not None:
             self.hist.axes.clear()
-            self.hist.axes.set_xlim([0 , 255])
-            self.hist.axes.set_ylim([0 , 1.1])
+            self.hist.axes.set_xlim([0, 255])
+            self.hist.axes.set_ylim([0, 1.1])
             # self.img = plt.imread('1.jpg')
 
             y, x = np.histogram(self.img, bins=np.arange(0, 255, 10), density=True)
@@ -295,7 +315,7 @@ class Camera(QtCore.QObject):
         self.camera.LineSelector.SetValue("Line3")
         self.camera.TriggerSelector.SetValue("FrameStart")
         self.camera.TriggerMode.SetValue("On")
-        #self.camera.TriggerDelay.SetValue(30)
+        # self.camera.TriggerDelay.SetValue(30)
         self.camera.ExposureMode.SetValue("Timed")
         self.camera.TriggerActivation.SetValue("RisingEdge")
         self.camera.TriggerSource.SetValue("Line3")
@@ -305,38 +325,29 @@ class Camera(QtCore.QObject):
         if active is True:
             self.camera.ExposureAuto = "Continuous"
             self.exp.slider.setValue(int(self.camera.ExposureTime.GetValue()))
-            self.exp.slider.setEnabled(False)
-            self.exp.spin_box.setEnabled(False)
         else:
             self.camera.ExposureAuto = "Off"
-            self.exp.slider.setEnabled(True)
-            self.exp.spin_box.setEnabled(True)
 
     # turn the camera auto-gain on or off
     def auto_gain(self, active):
         if active is True:
             self.camera.GainAuto = "Continuous"
             self.gain.slider.setValue(int(self.camera.Gain.GetValue()))
-            self.gain.slider.setEnabled(False)
-            self.gain.spin_box.setEnabled(False)
         else:
             self.camera.GainAuto = "Off"
-            self.gain.slider.setEnabled(True)
-            self.gain.spin_box.setEnabled(True)
-
 
 
 class MainWindow(QtWidgets.QMainWindow):
-    isStopped = True
+    is_stopped = True
     recording_thread = None
-    recording_finished = QtCore.Signal()
-    recording_counter = QtCore.Signal(int)
+    signal_recording_finished = QtCore.Signal()
+    signal_recording_counter = QtCore.Signal(int)
 
     def __init__(self, *args, **kwargs):
         super(MainWindow, self).__init__(*args, **kwargs)
         self.setWindowIcon(QtGui.QIcon('images/icon.png'))
         # loads the ui from .ui file
-        self.ui = uic.loadUi('twoCamera.ui', self)
+        self.ui = uic.loadUi(str(Path(__file__).parent / 'twoCamera.ui'), self)
         self.setWindowTitle('Shear Flow Deformation Cytometer Recording')
 
         # button icons and styling
@@ -346,114 +357,98 @@ class MainWindow(QtWidgets.QMainWindow):
         self.live.setIcon(QtGui.QIcon('images/play.png'))
         self.mount.setIcon(QtGui.QIcon('images/mount.png'))
 
-        self.switchpage.clicked.connect(lambda: self.Swidget.setCurrentIndex((self.Swidget.currentIndex() + 1) %2) )
+        self.switchpage.clicked.connect(lambda: self.Swidget.setCurrentIndex((self.Swidget.currentIndex() + 1) % 2))
 
-        self.NoteEdit.returnPressed.connect(self.EnterNote)
-
-        # making the graphs for histograms and placing them inside window
-        self.brhist = MplCanvas(self, width=4, height=2.5, dpi=70)
-        self.brlay.insertWidget(3, self.brhist)
-
-        self.flhist = MplCanvas(self, width=4, height=2.5, dpi=70)
-        self.fllay.insertWidget(3, self.flhist)
+        self.NoteEdit.returnPressed.connect(self.enter_note)
 
         self.timer = QtCore.QTimer(self)
         self.htimer = QtCore.QTimer(self)
 
-        self.brview = QExtendedGraphicsView()
-        self.brview.setMinimumHeight(300)
-        self.layout_views.addWidget(self.brview)
-
-        self.flview = QExtendedGraphicsView()
-        self.layout_views.addWidget(self.flview)
-
         self.cameras = [
             Camera(self,
-                InputSlideSpinSwitch(self, self.brexpslide, self.brexpspin, self.brexplay),
-                InputSlideSpinSwitch(self, self.brgainslide, self.brgainspin, self.brgainlay),
-                self.brhist,
-                self.brview,
-                self.brsn,
-                flip=[False, True],
-                master=True,
-            ),
+                   self.brlay,
+                   self.layout_views,
+                   InputSlideSpinSwitch(self, self.brexpslide, self.brexpspin, self.brexplay),
+                   InputSlideSpinSwitch(self, self.brgainslide, self.brgainspin, self.brgainlay),
+                   self.brsn,
+                   flip=[False, True],
+                   master=True,
+                   ),
             Camera(self,
-                InputSlideSpinSwitch(self, self.flexpslide, self.flexpspin, self.flexplay),
-                InputSlideSpinSwitch(self, self.flgainslide, self.flgainspin, self.flgainlay),
-                self.flhist,
-                self.flview,
-                self.flsn,
-                flip=[True, True],
-                master=False,
-            )
+                   self.fllay,
+                   self.layout_views,
+                   InputSlideSpinSwitch(self, self.flexpslide, self.flexpspin, self.flexplay),
+                   InputSlideSpinSwitch(self, self.flgainslide, self.flgainspin, self.flgainlay),
+                   self.flsn,
+                   flip=[True, True],
+                   master=False,
+                   )
         ]
 
         self.twoCamSwitch = SwitchButton(self, 'On', 10, 'Off', 31, 60)
         self.cameraPar.addWidget(self.twoCamSwitch, 1, 1)
-        self.twoCamSwitch.toggled.connect(self.TwoCamMode)
-        self.TwoCamMode(False)
+        self.twoCamSwitch.toggled.connect(self.two_camera_mode)
+        self.two_camera_mode(False)
 
         # making external switch botton
         self.exTswitch = SwitchButton(self, 'On', 10, 'Off', 31, 60)
         self.cameraPar.addWidget(self.exTswitch, 2, 1)
-        
-        self.exTswitch.toggled.connect(self.ETrig)
 
-        self.button_find_cams.clicked.connect(self.findCameras)
-        self.findCameras()
+        self.exTswitch.toggled.connect(self.external_trigger)
+
+        self.button_find_cams.clicked.connect(self.find_cameras)
+        self.find_cameras()
 
         # reading default config file
-        self.conf = config.SetupConfig('config.txt')  # config has its own class
+        self.conf = config.SetupConfig(str(Path(__file__).parent / 'config.txt'))  # config has its own class
         self.exTswitch.setChecked(self.conf.exTrig)
-        self.conf.update(self) #
-        self.saveCon.clicked.connect(self.SaveCon)
+        self.conf.update(self)  #
+        self.saveCon.clicked.connect(self.save_config)
 
-
-        # connects values of frame rate, duration is s and frames so that each change when the other changes
+        # connect values of frame rate, duration is s and frames so that each change when the other changes
         self.fnum.setValue(int(self.duration.value() * self.frate.value()))
         self.duration.valueChanged.connect(lambda c: self.fnum.setValue(int(c * self.frate.value())))
         self.fnum.valueChanged.connect(lambda c: self.duration.setValue(float(c / self.frate.value())))
         self.fnum.valueChanged.connect(lambda c: self.duration.setValue(float(c / self.frate.value())))
         self.frate.valueChanged.connect(lambda c: self.fnum.setValue(int(c * self.duration.value())))
-        # self.bar.setMaximum(self.fnum.value())
-        # self.fnum.valueChanged.connect(lambda c: self.bar.setMaximum(c))
 
-        ## conecting the push bottons to their functions
-        self.mount.clicked.connect(self.Mount)
-        self.live.clicked.connect(self.Live)
-        self.rec.clicked.connect(self.Rec)
-        self.stop.clicked.connect(self.Stop)
+        # connecting the push buttons to their functions
+        self.mount.clicked.connect(self.mount_cameras)
+        self.live.clicked.connect(self.start_live_view)
+        self.rec.clicked.connect(self.start_recording)
+        self.stop.clicked.connect(self.stop_cameras)
 
-        ## connecting the browse botton to its function
-        self.browse.clicked.connect(self.Browse)
-        self.dpath = filename.Dpath() #default path function
-        #creating the default path if it does not exist
-        if os.path.exists(self.dpath)==False:
+        # connecting the browse button to its function
+        self.browse.clicked.connect(self.select_save_folder)
+        self.dpath = filename.Dpath()  # default path function
+        # creating the default path if it does not exist
+        if not os.path.exists(self.dpath):
             os.mkdir(self.dpath)
         self.spath.setText(self.dpath)
-        #reading the note file from default path
-        notep = self.dpath + '\\' + 'Notes.txt'
-        if os.path.isfile(notep):
-            with open(notep) as Notes:
+
+        # reading the note file from default path
+        note_path = self.dpath + '\\' + 'Notes.txt'
+        if os.path.isfile(note_path):
+            with open(note_path) as Notes:
                 lines = Notes.read()
                 self.Notes.append(lines)
-        # self.ctext.appendPlainText(self.Dpath)
 
-        self.recording_finished.connect(self.on_recording_finished)
-        self.recording_counter.connect(self.set_counter)
+        self.signal_recording_finished.connect(self.on_recording_finished)
+        self.signal_recording_counter.connect(self.set_counter)
 
-    def findCameras(self):
+    def find_cameras(self):
         for cam in self.cameras:
             cam.unmount()
-        ## getting the list of connected camera's SN
+
+        # getting the list of connected camera's SN
         SN = []
         tl_factory = pylon.TlFactory.GetInstance()
         devices = tl_factory.EnumerateDevices()
         for device in devices:
-            SN.append( device.GetSerialNumber() )
+            SN.append(device.GetSerialNumber())
         self.label_cams_found.setText(f"Cameras Found: {len(SN)}")
 
-        #adding the serial numbers to list menus in ui
+        # adding the serial numbers to list menus in ui
         for i in range(self.brsn.count()):
             self.brsn.removeItem(0)
         for i in range(self.flsn.count()):
@@ -461,49 +456,48 @@ class MainWindow(QtWidgets.QMainWindow):
         self.brsn.addItems(SN)
         self.flsn.addItems(SN)
         if len(SN) > 1:
-            self.flsn.setCurrentIndex(1) #poiting the fl to the second camera SN to avoid both pointing to the same camera
+            # pointing the fl to the second camera SN to avoid both pointing to the same camera
+            self.flsn.setCurrentIndex(1)
             self.twoCamSwitch.setEnabled(True)
         else:
-            self.TwoCamMode(False)
+            self.two_camera_mode(False)
             self.twoCamSwitch.setEnabled(False)
 
-    ## stop either the live view or the recording   
-    def Stop(self):
+    def stop_cameras(self):
+        """ stop either the live view or the recording """
         try:
             self.htimer.stop()
             self.timer.stop()
         except:
             pass
         self.live.setStyleSheet('')
-        self.isStopped = True
-        
-    ## function for mounting the cameras
-    def Mount(self):
+        self.is_stopped = True
+        for camera in self.cameras:
+            camera.record_stop()
+
+    def mount_cameras(self):
         for cam in self.cameras:
             cam.mount()
 
-    ## function which starts the liveview
-    def Live(self):
-        self.isStopped = False
+    def start_live_view(self):
+        self.is_stopped = False
         for cam in self.cameras:
             cam.live()
 
         self.exTswitch.setEnabled(False)
 
-        self.SaveCon()
-        self.timer.start(int(1000/25))
-        self.htimer.start(int(1000/5))
+        self.save_config()
+        self.timer.start(int(1000 / 25))
+        self.htimer.start(int(1000 / 5))
         self.live.setStyleSheet('Background: rgb(170, 255, 127);')
 
-    ## function which starts the recording
-    def Rec(self):
+    def start_recording(self):
         try:
             self.htimer.stop()
             self.timer.stop()
             self.live.setStyleSheet('')
         except:
             pass
-        path = self.spath.text()
 
         for cam in self.cameras:
             cam.prepare_rec()
@@ -514,28 +508,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.rec.setStyleSheet('Background: rgb(255, 170, 127);')
         self.counter.setStyleSheet('color: rgb(255, 255, 255); background-color: rgb(0, 0, 0);')
 
-        self.recording_thread = threading.Thread(target=self.Save)
-        self.recording_thread.start()
-
-    def on_recording_finished(self):
-        # only when all cameras have finished
-        for camera in self.cameras:
-            if camera.active and camera.is_recording:
-                return
-        # self.bar.setValue(i)
-        self.SaveNote()
-        self.counter.setStyleSheet('color: rgb(0, 255, 0); background-color: rgb(0, 0, 0);')
-
-        conp = filename.Conpath(self.brpath)
-        self.conf.save(self)
-        self.conf.savein(conp)
-        self.exTswitch.setEnabled(True)
-        self.rec.setEnabled(True)
-        self.rec.setStyleSheet('')
-        self.Live()
-
-    ## funcation which runs the loop which saves the recording to the storage
-    def Save(self):
         path = self.spath.text()
         Path(path).mkdir(parents=True, exist_ok=True)
 
@@ -545,31 +517,48 @@ class MainWindow(QtWidgets.QMainWindow):
         sk = np.clip(frate // 20, 1, np.Inf)
 
         paths = filename.path(path, ["", "_Fl"])
-        self.cameras[0].record_sequence(paths[0], frate, fnum, sk, self.recording_finished, self.recording_counter.emit)
+        self.cameras[0].record_start(paths[0], frate, fnum, sk, self.signal_recording_finished, self.signal_recording_counter.emit)
         if self.cameras[1].active:
-            self.cameras[1].record_sequence(paths[1], frate, fnum, sk, self.recording_finished)
+            self.cameras[1].record_start(paths[1], frate, fnum, sk, self.signal_recording_finished)
+
+    def on_recording_finished(self):
+        # only when all cameras have finished
+        for camera in self.cameras:
+            if camera.active and camera.is_recording:
+                return
+        # self.bar.setValue(i)
+        self.save_note()
+        self.counter.setStyleSheet('color: rgb(0, 255, 0); background-color: rgb(0, 0, 0);')
+
+        conp = filename.Conpath(self.brpath)
+        self.conf.save(self)
+        self.conf.savein(conp)
+        self.exTswitch.setEnabled(True)
+        self.rec.setEnabled(True)
+        self.rec.setStyleSheet('')
+        self.start_live_view()
 
     def set_counter(self, value):
         self.counter.setText(str(value))
 
-    ## saves the config file
-    def SaveCon(self):
+    def save_config(self):
+        """ saves the config file """
         self.conf.save(self)
-        self.SaveNote()
+        self.save_note()
         # self.pbar.setValue(200)
 
-    def TwoCamMode(self, t):
+    def two_camera_mode(self, t):
         self.cameras[1].set_active(t)
         if t is False:
             self.cameras[1].unmount()
         else:
-            if self.isStopped is False:
+            if self.is_stopped is False:
                 self.cameras[1].live()
 
-    ## function to enable and diable the external trigger. takes bolean as argument
-    def ETrig(self, t):
-        self.conf.exTrig = t
-        if t:
+    def external_trigger(self, enable: bool):
+        """ function to enable and disable the external trigger."""
+        self.conf.exTrig = enable
+        if enable:
             self.frate.setValue(500)
             self.frate.setEnabled(False)
             self.ctext.appendPlainText(str(self.frate.value()))
@@ -577,28 +566,27 @@ class MainWindow(QtWidgets.QMainWindow):
             self.frate.setEnabled(True)
             self.frate.setValue(self.conf.frate)
 
-    ## function which opens the file dialog to ask for the saving directory
-    def Browse(self):
+    def select_save_folder(self):
+        """ function which opens the file dialog to ask for the saving directory """
         options = QtWidgets.QFileDialog.Options()
         # options |= QtWidgets.QFileDialog.DontUseNativeDialog
         options |= QtWidgets.QFileDialog.ShowDirsOnly
-        path = QtWidgets.QFileDialog.getExistingDirectory(self, 'Open a folder','', options=options)
+        path = QtWidgets.QFileDialog.getExistingDirectory(self, 'Open a folder', '', options=options)
         self.spath.setText(path)
-        notep = path + '\\' + 'Notes.txt'
-        with open(notep) as Notes:
+        note_path = path + '\\' + 'Notes.txt'
+        with open(note_path) as Notes:
             lines = Notes.read()
             self.Notes.append(lines)
-        
-    
-    ## enters notes from line edit to the text box with the time of the note
-    def EnterNote(self):
+
+    def enter_note(self):
+        """ enter notes from line edit to the text box with the time of the note """
         now = datetime.now()
         time = now.strftime("[%H:%M] ")
         self.Notes.append(time + self.NoteEdit.text())
         self.NoteEdit.clear()
 
-    ## save notes to selected path
-    def SaveNote(self):
+    def save_note(self):
+        """ save notes to selected path """
         path = self.spath.text() + '\\' + 'Notes.txt'
         with open(path, "w") as Notes:
             Notes.write(self.Notes.toPlainText())
@@ -615,6 +603,7 @@ def main():
     app.setStyle('Fusion')
     main.show()
     sys.exit(app.exec_())
+
 
 if __name__ == '__main__':
     main()
