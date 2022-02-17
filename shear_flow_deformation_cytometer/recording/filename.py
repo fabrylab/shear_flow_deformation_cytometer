@@ -2,17 +2,20 @@ from datetime import datetime, time
 import os
 
 
-def path(path, suffix):
+def path(path, suffixes):
     date_time = datetime.now()
-    flname = str(date_time.year) + '_' + \
-                 '{0:02d}'.format(date_time.month) + '_' + \
-                 '{0:02d}'.format(date_time.day) + '_' + \
-                 '{0:02d}'.format(date_time.hour) + '_' + \
-                 '{0:02d}'.format(date_time.minute) + '_' + \
-                 '{0:02d}'.format(date_time.second) + suffix
+    paths = []
+    for suffix in suffixes:
+        flname = str(date_time.year) + '_' + \
+                     '{0:02d}'.format(date_time.month) + '_' + \
+                     '{0:02d}'.format(date_time.day) + '_' + \
+                     '{0:02d}'.format(date_time.hour) + '_' + \
+                     '{0:02d}'.format(date_time.minute) + '_' + \
+                     '{0:02d}'.format(date_time.second) + suffix
+        flpath = path + '\\' + flname + '.tif'
+        paths.append(flpath)
 
-    flpath = path + '\\' + flname + '.tif'
-    return flpath
+    return paths
 
 
 def Conpath(bpath):

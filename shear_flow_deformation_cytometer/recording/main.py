@@ -9,6 +9,7 @@ from pathlib import Path
 import tifffile
 import sys
 import os
+import threading
 
 import matplotlib
 import matplotlib.pyplot as plt
@@ -69,13 +70,19 @@ class InputSlideSpinSwitch(QtWidgets.QWidget):
             widget.hide()
 
 
-class Camera():
+class Camera(QtCore.QObject):
     camera = None
-    bimg = None
+    img = None
     mounted = False
     active = True
 
+    is_recording = False
+
+    signal_display = QtCore.Signal(np.ndarray)
+    signal_finsihed_recording = QtCore.Signal()
+
     def __init__(self, parent, exp, gain, hist, view, sn, flip, master):
+        super().__init__()
         self.parent = parent
         self.exp = exp
         self.gain = gain
@@ -89,6 +96,8 @@ class Camera():
 
         self.parent.timer.timeout.connect(self.update_view)
         self.parent.htimer.timeout.connect(self.update_hist)
+
+        self.signal_display.connect(self.display_image)
 
     def set_active(self, active):
         self.active = active
@@ -183,6 +192,53 @@ class Camera():
             self.camera.LineSource.SetValue("ExposureActive")
         self.camera.StartGrabbing(pylon.GrabStrategy_OneByOne)
 
+    def record_stop(self):
+        self.record_do_stop = True
+
+    def record_sequence(self, output_path, frame_rate, total_frame_number, sk, callback_end=None, callback_frame=None):
+        self.record_do_stop = False
+        self.record_thread = threading.Thread(target=self.record_sequence_thread, args=(output_path, frame_rate, total_frame_number, sk, callback_end, callback_frame))
+
+    def record_sequence_thread(self, output_path, frame_rate, total_frame_number, sk, callback_end, callback_frame=None):
+        self.is_recording = True
+        tif_writer = tifffile.TiffWriter(output_path, bigtiff=True)
+        try:
+            timestamp_start = None
+            current_frame_number = 0
+            dt = 1 / frame_rate * 1e3
+            while current_frame_number < total_frame_number and not self.record_do_stop:
+                # grab the next frame
+                grab = self.camera.RetrieveResult(3000, pylon.TimeoutHandling_Return)
+                if grab.GrabSucceeded():
+                    # get the image and timestamp
+                    img = grab.GetArray()
+                    timestamp = grab.GetTimeStamp() / 1000000
+                    # store the first timestamp as start time
+                    if timestamp_start is None:
+                        timestamp_start = timestamp
+                    # round the timestamp to the neasrest frame number
+                    frame_number = np.round((timestamp - timestamp_start)/dt + 0.5)
+
+                    # if we missed some frames, fill them up with black frames
+                    while current_frame_number < frame_number and current_frame_number < total_frame_number:
+                        meta_data = {'timestamp': "nan"}
+                        tif_writer.save(np.zeros_like(img), compression=0, metadata=meta_data, contiguous=False)
+                        current_frame_number += 1
+
+                    # if we don't have reached the end yet, store the current frame
+                    if current_frame_number < total_frame_number:
+                        meta_data = {'timestamp': str(timestamp)}
+                        tif_writer.save(img, compression=0, metadata=meta_data, contiguous=False)
+                        current_frame_number += 1
+
+                    if current_frame_number % sk == 0 and callback_frame:
+                        callback_frame(img)
+        finally:
+            tif_writer.close()
+            self.is_recording = False
+            if callback_end is not None:
+                callback_end()
+
     def rec_image(self, Btif, show=False):
         if self.mounted is False:
             return
@@ -193,7 +249,10 @@ class Camera():
             bmetad = {'timestamp': str(btimestamp)}
             Btif.save(bimg, compression=0, metadata=bmetad, contiguous=False)
             if show:
-                self.pixmap.setPixmap(QtGui.QPixmap(array2qimage(bimg)))
+                self.signal_display.emit(bimg)
+
+    def display_image(self, bimg):
+        self.pixmap.setPixmap(QtGui.QPixmap(array2qimage(bimg)))
 
     def update_hist(self):
         if self.mounted is True and self.bimg is not None:
@@ -287,6 +346,9 @@ class Camera():
 
 class MainWindow(QtWidgets.QMainWindow):
     isStopped = True
+    recording_thread = None
+    recording_finished = QtCore.Signal()
+    recording_counter = QtCore.Signal(int)
 
     def __init__(self, *args, **kwargs):
         super(MainWindow, self).__init__(*args, **kwargs)
@@ -395,6 +457,9 @@ class MainWindow(QtWidgets.QMainWindow):
                 self.Notes.append(lines)
         # self.ctext.appendPlainText(self.Dpath)
 
+        self.recording_finished.connect(self.on_recording_finished)
+        self.recording_counter.connect(self.set_counter)
+
     def findCameras(self):
         for cam in self.cameras:
             cam.unmount()
@@ -466,7 +531,19 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.rec.setStyleSheet('Background: rgb(255, 170, 127);')
         self.counter.setStyleSheet('color: rgb(255, 255, 255); background-color: rgb(0, 0, 0);')
-        self.Save()
+
+        self.recording_thread = threading.Thread(target=self.Save)
+        self.recording_thread.start()
+
+    def on_recording_finished(self):
+        # only when all cameras have finished
+        for camera in self.cameras:
+            if camera.active and camera.is_recording:
+                return
+        # self.bar.setValue(i)
+        self.SaveNote()
+        self.counter.setStyleSheet('color: rgb(0, 255, 0); background-color: rgb(0, 0, 0);')
+
         conp = filename.Conpath(self.brpath)
         self.conf.save(self)
         self.conf.savein(conp)
@@ -479,48 +556,19 @@ class MainWindow(QtWidgets.QMainWindow):
     def Save(self):
         path = self.spath.text()
         Path(path).mkdir(parents=True, exist_ok=True)
-        if self.cameras[1].active:
-            self.brpath = filename.path(path, "")
-            self.flpath = filename.path(path, "_Fl")
-        else:
-            self.brpath = filename.path(path, "")
-            self.flpath = None
+
         frate = self.frate.value()
         fnum = self.fnum.value()
 
-        if frate < 20:
-            sk = 1
-        else:
-            sk = frate // 20
+        sk = np.clip(frate // 20, 1, np.Inf)
 
-        if self.cameras[1].mounted:
-            Ftif = tifffile.TiffWriter(self.flpath, bigtiff=True)
-        else:
-            Ftif = None
-        if self.cameras[0].mounted:
-            Btif = tifffile.TiffWriter(self.brpath, bigtiff=True)
-        ran = np.arange(1 , fnum+1)
-        for i in ran:
-            if self.isStopped:
-                self.isStopped = False
-                break
+        paths = filename.path(path, ["", "_Fl"])
+        self.cameras[0].record_sequence(paths[0], frate, fnum, sk, self.recording_finished, self.recording_counter.emit)
+        if self.cameras[1].active:
+            self.cameras[1].record_sequence(paths[1], frate, fnum, sk, self.recording_finished)
 
-            for cam, tif in zip(self.cameras, [Btif, Ftif]):
-                cam.rec_image(tif, i % sk)
-
-            if i % sk == 0:
-                QtWidgets.QApplication.processEvents()
-                self.counter.setText(str(i))
-        self.counter.setText(str(i))
-
-        # self.bar.setValue(i)
-        if self.cameras[1].mounted:
-            Ftif.close()
-        if self.cameras[0].mounted:
-            Btif.close()
-        self.SaveNote()
-        self.counter.setStyleSheet('color: rgb(0, 255, 0); background-color: rgb(0, 0, 0);')
-
+    def set_counter(self, value):
+        self.counter.setText(str(value))
 
     ## saves the config file
     def SaveCon(self):
