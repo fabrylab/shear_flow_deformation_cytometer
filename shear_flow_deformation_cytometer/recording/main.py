@@ -20,14 +20,8 @@ import config
 import filename
 from datetime import datetime
 
-# These three lines tells windows to show the program as a singular item on taskbar
-import ctypes
-myappid = 'FAU.BaslerTwoCamera' # arbitrary string
-ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
-
 from shear_flow_deformation_cytometer.gui.QExtendedGraphicsView import QExtendedGraphicsView
 from qimage2ndarray import array2qimage
-from pyqtgraph import ImageView
 
 
 # this is the class which produces the graphs needed for histogram
@@ -41,7 +35,7 @@ class MplCanvas(FigureCanvas):
         super(MplCanvas, self).__init__(self.fig)
         self.fig.tight_layout()
         self.axes.set_facecolor('snow')  # color of the background inside the graph
-        self.fig.set_facecolor('whitesmoke')  # color of the pading aroung graph
+        self.fig.set_facecolor('whitesmoke')  # color of the padding around graph
 
 
 class InputSlideSpinSwitch(QtWidgets.QWidget):
@@ -77,12 +71,14 @@ class Camera(QtCore.QObject):
     active = True
 
     is_recording = False
+    record_do_stop = False
 
     signal_display = QtCore.Signal(np.ndarray)
-    signal_finsihed_recording = QtCore.Signal()
+    signal_finished_recording = QtCore.Signal()
 
     def __init__(self, parent, exp, gain, hist, view, sn, flip, master):
         super().__init__()
+        self.record_thread = None
         self.parent = parent
         self.exp = exp
         self.gain = gain
@@ -159,14 +155,7 @@ class Camera(QtCore.QObject):
         except:
             pass
 
-        self.camera.AcquisitionFrameRate = self.parent.frate.value()
-
-        if self.parent.exTswitch.isChecked() or self.master is False:
-            self.camera.LineMode.SetValue("Input")
-        else:
-            self.camera.LineMode.SetValue("Output")
-        if self.master is True:
-            self.camera.LineSource.SetValue("ExposureActive")
+        self.set_line_mode()
         self.camera.StartGrabbing(pylon.GrabStrategy_LatestImageOnly)
 
     def prepare_rec(self):
@@ -183,6 +172,11 @@ class Camera(QtCore.QObject):
             self.camera.ExposureTime.SetValue(self.exp.spin_box.value())
         if self.gain.spin_box.isEnabled():
             self.camera.Gain.SetValue(self.gain.spin_box.value())
+
+        self.set_line_mode()
+        self.camera.StartGrabbing(pylon.GrabStrategy_OneByOne)
+
+    def set_line_mode(self):
         self.camera.AcquisitionFrameRate = self.parent.frate.value()
         if self.parent.exTswitch.isChecked() or self.master is False:
             self.camera.LineMode.SetValue("Input")
@@ -190,7 +184,6 @@ class Camera(QtCore.QObject):
             self.camera.LineMode.SetValue("Output")
         if self.master is True:
             self.camera.LineSource.SetValue("ExposureActive")
-        self.camera.StartGrabbing(pylon.GrabStrategy_OneByOne)
 
     def record_stop(self):
         self.record_do_stop = True
@@ -216,7 +209,7 @@ class Camera(QtCore.QObject):
                     # store the first timestamp as start time
                     if timestamp_start is None:
                         timestamp_start = timestamp
-                    # round the timestamp to the neasrest frame number
+                    # round the timestamp to the nearest frame number
                     frame_number = np.round((timestamp - timestamp_start)/dt + 0.5)
 
                     # if we missed some frames, fill them up with black frames
@@ -233,46 +226,35 @@ class Camera(QtCore.QObject):
 
                     if current_frame_number % sk == 0 and callback_frame:
                         callback_frame(img)
+                        self.display_image(img)
         finally:
             tif_writer.close()
             self.is_recording = False
             if callback_end is not None:
                 callback_end()
 
-    def rec_image(self, Btif, show=False):
-        if self.mounted is False:
-            return
-        bgrab = self.camera.RetrieveResult(3000, pylon.TimeoutHandling_Return)
-        if bgrab.GrabSucceeded():
-            bimg = bgrab.GetArray()
-            btimestamp = bgrab.GetTimeStamp() / 1000000
-            bmetad = {'timestamp': str(btimestamp)}
-            Btif.save(bimg, compression=0, metadata=bmetad, contiguous=False)
-            if show:
-                self.signal_display.emit(bimg)
-
-    def display_image(self, bimg):
-        self.pixmap.setPixmap(QtGui.QPixmap(array2qimage(bimg)))
+    def display_image(self, img):
+        self.pixmap.setPixmap(QtGui.QPixmap(array2qimage(img)))
 
     def update_hist(self):
-        if self.mounted is True and self.bimg is not None:
+        if self.mounted is True and self.img is not None:
             self.hist.axes.clear()
             self.hist.axes.set_xlim([0 , 255])
             self.hist.axes.set_ylim([0 , 1.1])
-            # self.bimg = plt.imread('1.jpg')
+            # self.img = plt.imread('1.jpg')
 
-            y, x = np.histogram(self.bimg, bins=np.arange(0, 255, 10), density=True)
+            y, x = np.histogram(self.img, bins=np.arange(0, 255, 10), density=True)
             x = x[:-1] + np.diff(x)
             y = y / y.max()
-            self.hist.axes.plot(x , y)
-            self.hist.axes.fill_between(x , 0 , y , alpha=0.5)
+            self.hist.axes.plot(x, y)
+            self.hist.axes.fill_between(x, 0, y, alpha=0.5)
             self.hist.draw()
 
         if self.mounted is True:
             if not self.exp.spin_box.isEnabled():
                 self.exp.spin_box.setValue(int(self.camera.ExposureTime.GetValue()))
             if not self.gain.spin_box.isEnabled():
-                self.gain.spin_box.setValue(int (self.camera.Gain.GetValue()))
+                self.gain.spin_box.setValue(int(self.camera.Gain.GetValue()))
 
     def update_view(self):
         if self.mounted:
@@ -284,14 +266,14 @@ class Camera(QtCore.QObject):
                 self.camera.Gain.SetValue(self.gain.spin_box.value())
 
             if self.camera.IsGrabbing():
-                bgrab = self.camera.RetrieveResult(3000, pylon.TimeoutHandling_Return)
-                if bgrab.GrabSucceeded():
-                    self.bimg = bgrab.GetArray()
-                    self.pixmap.setPixmap(QtGui.QPixmap(array2qimage(self.bimg)))
-                    self.view.setExtend(self.bimg.shape[1], self.bimg.shape[0])
-                bgrab.Release()
+                grab = self.camera.RetrieveResult(3000, pylon.TimeoutHandling_Return)
+                if grab.GrabSucceeded():
+                    self.img = grab.GetArray()
+                    self.pixmap.setPixmap(QtGui.QPixmap(array2qimage(self.img)))
+                    self.view.setExtend(self.img.shape[1], self.img.shape[0])
+                grab.Release()
 
-    ##function where repetetive camera settings is being applied. to avoid redundency in the code
+    # function where repetetive camera settings is being applied. to avoid redundancy in the code
     def set_camera_static_parameters(self):
         self.camera.AcquisitionFrameRateEnable.SetValue(True)
         self.camera.AcquisitionMode.SetValue("Continuous")
@@ -308,7 +290,7 @@ class Camera(QtCore.QObject):
         self.camera.ChunkSelector = "ExposureTime"
         self.camera.ChunkEnable = True
 
-    ## set the settings specific to the slave camera
+    # set the settings specific to the slave camera
     def set_slave(self):
         self.camera.LineSelector.SetValue("Line3")
         self.camera.TriggerSelector.SetValue("FrameStart")
@@ -318,7 +300,7 @@ class Camera(QtCore.QObject):
         self.camera.TriggerActivation.SetValue("RisingEdge")
         self.camera.TriggerSource.SetValue("Line3")
 
-    ## turn the camera autoexp on or off
+    # turn the camera auto-exposure on or off
     def auto_exposure(self, active):
         if active is True:
             self.camera.ExposureAuto = "Continuous"
@@ -330,7 +312,7 @@ class Camera(QtCore.QObject):
             self.exp.slider.setEnabled(True)
             self.exp.spin_box.setEnabled(True)
 
-    ## turn the camera autogain on or off
+    # turn the camera auto-gain on or off
     def auto_gain(self, active):
         if active is True:
             self.camera.GainAuto = "Continuous"
@@ -352,23 +334,23 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def __init__(self, *args, **kwargs):
         super(MainWindow, self).__init__(*args, **kwargs)
-        self.setWindowIcon(QtGui.QIcon('images/icon.png')) #window icon
-        self.ui = uic.loadUi('twoCamera.ui', self) #loads the ui from .ui file
-        self.setWindowTitle('Shear Flow Deformation Cytometer Recording') #window name
+        self.setWindowIcon(QtGui.QIcon('images/icon.png'))
+        # loads the ui from .ui file
+        self.ui = uic.loadUi('twoCamera.ui', self)
+        self.setWindowTitle('Shear Flow Deformation Cytometer Recording')
 
-        ## botton icons and styling
+        # button icons and styling
         self.counter.setAlignment(QtCore.Qt.AlignCenter)
         self.rec.setIcon(QtGui.QIcon('images/rec.png'))
         self.stop.setIcon(QtGui.QIcon('images/stop.png'))
         self.live.setIcon(QtGui.QIcon('images/play.png'))
         self.mount.setIcon(QtGui.QIcon('images/mount.png'))
-        # self.switchpage.setIcon(QtGui.QIcon('switch.png'))
-        # self.switchpage.setStyleSheet('border : 0; background: transparent;')
+
         self.switchpage.clicked.connect(lambda: self.Swidget.setCurrentIndex((self.Swidget.currentIndex() + 1) %2) )
 
         self.NoteEdit.returnPressed.connect(self.EnterNote)
 
-        ## making the graphs for histograms and placing them inside window
+        # making the graphs for histograms and placing them inside window
         self.brhist = MplCanvas(self, width=4, height=2.5, dpi=70)
         self.brlay.insertWidget(3, self.brhist)
 
@@ -411,7 +393,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.twoCamSwitch.toggled.connect(self.TwoCamMode)
         self.TwoCamMode(False)
 
-        ## making external switch botton
+        # making external switch botton
         self.exTswitch = SwitchButton(self, 'On', 10, 'Off', 31, 60)
         self.cameraPar.addWidget(self.exTswitch, 2, 1)
         
@@ -420,14 +402,14 @@ class MainWindow(QtWidgets.QMainWindow):
         self.button_find_cams.clicked.connect(self.findCameras)
         self.findCameras()
 
-        ## reading default config file
-        self.conf = config.SetupConfig('config.txt') #config has it's own class
+        # reading default config file
+        self.conf = config.SetupConfig('config.txt')  # config has its own class
         self.exTswitch.setChecked(self.conf.exTrig)
         self.conf.update(self) #
         self.saveCon.clicked.connect(self.SaveCon)
 
 
-        ## connects values of frame rate, duration is s and frames so that each change when the other changes
+        # connects values of frame rate, duration is s and frames so that each change when the other changes
         self.fnum.setValue(int(self.duration.value() * self.frate.value()))
         self.duration.valueChanged.connect(lambda c: self.fnum.setValue(int(c * self.frate.value())))
         self.fnum.valueChanged.connect(lambda c: self.duration.setValue(float(c / self.frate.value())))
@@ -623,6 +605,11 @@ class MainWindow(QtWidgets.QMainWindow):
 
 
 def main():
+    # These three lines tells windows to show the program as a singular item on taskbar
+    import ctypes
+    # set the app id to an arbitrary string
+    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('FAU.BaslerTwoCamera')
+
     app = QtWidgets.QApplication(sys.argv)
     main = MainWindow()
     app.setStyle('Fusion')
