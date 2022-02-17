@@ -189,7 +189,7 @@ class Camera():
         bgrab = self.camera.RetrieveResult(3000, pylon.TimeoutHandling_Return)
         if bgrab.GrabSucceeded():
             bimg = bgrab.GetArray()
-            btimestamp = bgrab.GetTimeStamp() // 1000000
+            btimestamp = bgrab.GetTimeStamp() / 1000000
             bmetad = {'timestamp': str(btimestamp)}
             Btif.save(bimg, compression=0, metadata=bmetad, contiguous=False)
             if show:
