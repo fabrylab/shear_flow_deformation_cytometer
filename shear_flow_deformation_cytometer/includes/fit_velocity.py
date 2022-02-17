@@ -33,7 +33,7 @@ def getVelocity(eta0, alpha, tau, H, W, P, L, x_sample=100):
         return f2
 
     def f_max(beta):
-        return (eta0 / (tau_alpha * alpha * beta + 1e-33))**(1/(alpha-1))
+        return (eta0 / (tau_alpha * alpha * beta + 1e-10))**(1/(alpha-1))
 
     ys = np.arange(1e-6, H/2+1e-6, 1e-6)
     ys = np.linspace(0, H/2, x_sample)
@@ -115,7 +115,7 @@ def fit_velocity(data, config, p=None, channel_width=None):
     return p, getFitFunc(x, eta0, alpha, tau, H, W, P, L), getFitFuncDot(x, eta0, alpha, tau, H, W, P, L)
 
 
-def fit_velocity_pressures(data, config, p=None, channel_width=None, pressures=None, x_sample=100):
+def fit_velocity_pressures(data, config, p=None, channel_width=None, pressures=None, x_sample=100, start_params=[3.8, 0.64, 0.04]):
     if channel_width is None:
         H = config["channel_width_m"]
         W = config["channel_width_m"]
@@ -140,14 +140,16 @@ def fit_velocity_pressures(data, config, p=None, channel_width=None, pressures=N
     def getAllCost(p):
         cost = 0
         for P in fit_pressures:
-            c = (getFitFunc(x2[press2 == P], p[0], p[1], p[2], H, W, P*1e5, L, x_sample) - y2[press2 == P]) ** 2
+            c = np.abs(getFitFunc(x2[press2 == P], p[0], p[1], p[2], H, W, P*1e5, L, x_sample) - y2[press2 == P])
+            if np.sum(np.isnan(c)):
+                return np.Inf
             # clip cost for possible outliers
             c = np.clip(c, 0, np.percentile(c, 95))
             cost += np.sum(c)
         return cost
 
     if p is None:
-        res = optimize.minimize(getAllCost, [3.8, 0.64, 0.04], method="TNC", options={'maxiter': 200, 'ftol': 1e-16},
+        res = optimize.minimize(getAllCost, start_params, method="TNC", options={'maxiter': 200, 'ftol': 1e-16},
                                 bounds=[(1, 100), (0, 0.9), (0, np.inf)])
 
         p = res["x"]

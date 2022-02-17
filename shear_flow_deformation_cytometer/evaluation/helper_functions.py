@@ -144,9 +144,9 @@ def bootstrap_error(data, func=np.median, repetitions=1000):
 from shear_flow_deformation_cytometer.includes.fit_velocity import fit_velocity_pressures
 
 
-def apply_velocity_fit(data2):
+def apply_velocity_fit(data2, start_params=[3.8, 0.64, 0.04]):
     config = {"channel_length_m": 5.8e-2, "channel_width_m": 186e-6}
-    p0, vel, vel_grad = fit_velocity_pressures(data2, config, x_sample=100)
+    p0, vel, vel_grad = fit_velocity_pressures(data2, config, x_sample=100, start_params=start_params)
     eta0, delta, tau = p0
     eta = eta0 / (1 + tau ** delta * np.abs(vel_grad) ** delta)
 
