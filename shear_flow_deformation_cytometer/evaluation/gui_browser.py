@@ -24,7 +24,9 @@ import matplotlib.pyplot as plt
 import yaml
 from shear_flow_deformation_cytometer.gui.QExtendedGraphicsView import QExtendedGraphicsView
 
-from shear_flow_deformation_cytometer.evaluation.helper_functions import getMeta, load_all_data_new, plot_velocity_fit, plotDensityScatter, plot_density_hist, plotBinnedData, stress_strain_fit, get2Dhist_k_alpha, getGp1Gp2fit_k_alpha, getGp1Gp2fit3_k_alpha, get2Dhist_k_alpha
+from shear_flow_deformation_cytometer.evaluation.helper_plot import plot_velocity_fit, plot_density_scatter, plot_density_hist, plot_binned_data
+from shear_flow_deformation_cytometer.evaluation.helper_load import get_meta, load_all_data_new
+from shear_flow_deformation_cytometer.evaluation.helper_functions import stress_strain_fit, get2Dhist_k_alpha, getGp1Gp2fit_k_alpha, getGp1Gp2fit3_k_alpha, get2Dhist_k_alpha
 
 def kill_thread(thread):
     """
@@ -85,7 +87,7 @@ class ImageView(QtWidgets.QWidget):
         super().__init__()
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        self.view = QExtendedGraphicsView.QExtendedGraphicsView()
+        self.view = QExtendedGraphicsView()
         self.view.setMinimumWidth(300)
         self.pixmap = QtWidgets.QGraphicsPixmapItem(self.view.origin)
         layout.addWidget(self.view)
@@ -141,7 +143,7 @@ class ImageView(QtWidgets.QWidget):
         self.pixmap.setPixmap(QtGui.QPixmap(array2qimage(im)))
         self.view.setExtend(im.shape[1], im.shape[0])
 
-        data = self.data.query(f"frames == {frame}")
+        data = self.data.query(f"frame == {frame}")
         self.deleteEllipses()
         for i, d in data.iterrows():
             self.addEllipse(d.x, d.y, d.long_axis / self.config["pixel_size"], d.short_axis / self.config["pixel_size"], d.angle,)
@@ -231,38 +233,39 @@ class MeasurementPlot(QtWidgets.QWidget):
             plot_velocity_fit(data)
             plt.text(0, 0, f"eta0: {data.iloc[0].eta0:.2f}\ntau: {data.iloc[0].tau:.4f}\ndelta: {data.iloc[0].delta:.3f}", ha="left", va="bottom")
 
-            plt.subplot(3, 3, 2)
-            plt.axline([0,0], slope=1, color="k")
-            colors = np.array([matplotlib.colors.to_rgba("C0")]*len(data.tt_r2))
-            colors[:, 3] = data.tt_r2
-            plt.scatter(data.omega, data.omega_weissenberg, s=1, color=colors)
-            plt.xlabel("measured angular frequency (rad/s)")
-            plt.ylabel("fitted angular frequency (rad/s)")
+            if "tt_r2" in data:
+                plt.subplot(3, 3, 2)
+                plt.axline([0,0], slope=1, color="k")
+                colors = np.array([matplotlib.colors.to_rgba("C0")]*len(data.tt_r2))
+                colors[:, 3] = data.tt_r2
+                plt.scatter(data.omega, data.omega_weissenberg, s=1, color=colors)
+                plt.xlabel("measured angular frequency (rad/s)")
+                plt.ylabel("fitted angular frequency (rad/s)")
 
             plt.subplot(3, 3, 3)
-            plotDensityScatter(data.stress, data.epsilon)
-            plotBinnedData(data.stress, data.epsilon, bins=np.arange(0, 300, 10))
+            plot_density_scatter(data.stress, data.strain)
+            plot_binned_data(data.stress, data.strain, bins=np.arange(0, 300, 10))
             stress, strain = stress_strain_fit(data, pair_2dmode[0], pair_2dmode[1])
             plt.plot(stress, strain, "-k")
             plt.xlabel("stress (Pa)")
             plt.ylabel("strain")
 
             plt.subplot(3, 3, 4)
-            plt.loglog(data.omega_weissenberg, data.w_Gp1, "o", alpha=0.25, ms=1)
-            plt.loglog(data.omega_weissenberg, data.w_Gp2, "o", alpha=0.25, ms=1)
+            plt.loglog(data.omega, data.Gp1, "o", alpha=0.25, ms=1)
+            plt.loglog(data.omega, data.Gp2, "o", alpha=0.25, ms=1)
 
-            xx = [10**np.floor(np.log10(np.min(data.w_Gp1))), 10**np.ceil(np.log10(np.max(data.w_Gp1)))]
+            xx = [10**np.floor(np.log10(np.min(data.Gp1))), 10**np.ceil(np.log10(np.max(data.Gp1)))]
             plt.plot(xx, fit(xx, *pair_2dmode)[0], "k-", lw=1.)
             plt.plot(xx, fit(xx, *pair_2dmode)[1], "k--", lw=1.)
 
             plt.ylabel("G' / G'' (Pa)")
             plt.xlabel("angular frequency (rad/s)")
-            plt.xlim(*np.percentile(data.omega_weissenberg, [0.1, 99.9]))
+            plt.xlim(*np.percentile(data.omega, [0.1, 99.9]))
 
             ax = plt.subplot(3, 3, 5)
             plt.cla()
             plt.xlim(0, 4)
-            plot_density_hist(np.log10(data.w_k_cell), color="C0")
+            plot_density_hist(np.log10(data.k), color="C0")
             plt.axvline(np.log10(pair_2dmode[0]), color="k")
             plt.xlabel("stiffness k (Pa)")
             plt.ylabel("relative density")
@@ -271,14 +274,14 @@ class MeasurementPlot(QtWidgets.QWidget):
             plt.subplot(3, 3, 6)
             plt.cla()
             plt.xlim(0, 1)
-            plot_density_hist(data.w_alpha_cell, color="C1")
+            plot_density_hist(data.alpha, color="C1")
             plt.ylabel("relative density")
             plt.xlabel("fluidity $\\alpha$")
             plt.axvline(pair_2dmode[1], color="k")
 
             ax = plt.subplot(3, 3, 7)
             plt.cla()
-            plotDensityScatter(np.log10(data.w_k_cell), data.w_alpha_cell)
+            plot_density_scatter(np.log10(data.k), data.alpha)
             plt.axvline(np.log10(pair_2dmode[0]), color="k"); plt.axhline(pair_2dmode[1], color="k", label="2dmode")
             #plt.legend()
             plt.xlabel("stiffness k (Pa)")
@@ -337,7 +340,7 @@ class MetaDataEditor(QtWidgets.QWidget):
                 fp.write(self.text2.toPlainText())
 
     def selected(self, name):
-        meta = getMeta(name)
+        meta = get_meta(name)
         self.name.setText(name)
 
         self.text.setPlainText(yaml.dump(meta))

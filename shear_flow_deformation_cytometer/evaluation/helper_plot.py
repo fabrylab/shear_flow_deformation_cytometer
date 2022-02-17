@@ -108,7 +108,7 @@ def all_plots_same_limits():
         ax.set_ylim(ymin, ymax)
 
 
-def plot_velocity_fit(data, color=None):
+def plot_velocity_fit(data, color=None, parameters=None, color_fit="k"):
     def getFitLine(pressure, p):
         config = {"channel_length_m": 5.8e-2, "channel_width_m": 186e-6}
         x, y = getFitXY(config, np.mean(pressure), p)
@@ -123,10 +123,10 @@ def plot_velocity_fit(data, color=None):
         d = d.set_index(["eta0", "delta", "tau"]).copy()
         for p in d.index.unique():
             dd = d.loc[p]
-            x, y = getFitLine(pressure, p)
+            x, y = getFitLine(pressure, p if parameters is None else parameters)
             line, = plt.plot(np.abs(dd.radial_position), dd.measured_velocity * 1e-3 * 1e2, "o", alpha=0.3, ms=2, color=color)
             plt.plot([], [], "o", ms=2, color=line.get_color(), label=f"{pressure:.1f}")
-            l, = plt.plot(x[x >= 0] * 1e+6, y[x >= 0] * 1e2, color="k")
+            l, = plt.plot(x[x >= 0] * 1e+6, y[x >= 0] * 1e2, color=color_fit)
             maxima.append(np.nanmax(y[x > 0] * 1e2))
     try:
         plt.ylim(top=np.nanmax(maxima) * 1.1)

@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 
 from shear_flow_deformation_cytometer.includes.includes import getConfig
+from shear_flow_deformation_cytometer.evaluation.helper_functions import filterCenterCells
 
 path_string = Union[str, Path]
 
@@ -190,10 +191,10 @@ def load_all_data_new(input_path: Union[path_string, List[path_string]], pressur
     if isinstance(input_path, list):
         for i, path in enumerate(input_path):
             if str(path).endswith(".tif"):
-                input_path[i] = str(path).replace(".tif", "_evaluated_new.csv")
+                input_path[i] = str(path).replace(".tif", "_evaluated.csv")
     else:
         if str(input_path).endswith(".tif"):
-            input_path = str(input_path).replace(".tif", "_evaluated_new.csv")
+            input_path = str(input_path).replace(".tif", "_evaluated.csv")
 
     unit_matcher = re.compile(r"(\d*\.?\d+)([^\d]+)$")
 
