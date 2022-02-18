@@ -23,11 +23,12 @@ from shear_flow_deformation_cytometer.evaluation.helper_plot import plot_velocit
 def overview_plot(datafile, data):
 
     plt.figure(0, (10, 8))
+    plt.clf()
 
     plt.subplot(2, 3, 1)
     plt.cla()
     plot_velocity_fit(data)
-    plt.text(0.9, 0.9, f"$\\eta_0$ {data.eta0[0]:.2f}\n$\\delta$ {data.delta[0]:.2f}\n$\\tau$ {data.tau[0]:.2f}", transform=plt.gca().transAxes, va="top", ha="right")
+    plt.text(0.9, 0.9, f"{data.pressure[0]:.2f} bar\n$\\eta_0$ {data.eta0[0]:.2f}\n$\\delta$ {data.delta[0]:.2f}\n$\\tau$ {data.tau[0]:.2f}", transform=plt.gca().transAxes, va="top", ha="right")
 
     plt.subplot(2, 3, 2)
     plt.cla()
