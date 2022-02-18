@@ -58,6 +58,7 @@ class ResultCombiner:
         from shear_flow_deformation_cytometer.evaluation.helper_functions import correctCenter, filterCells, getStressStrain, \
             apply_velocity_fit, get_cell_properties, match_cells_from_all_data, add_units
         from shear_flow_deformation_cytometer.evaluation.overview_plot import overview_plot
+        from shear_flow_deformation_cytometer.evaluation.flourescence_intensity import get_fluorescence_intensity
 
         filename = block["filename"]
         image_width = block["data_info"]["shape"][2]
@@ -93,6 +94,9 @@ class ResultCombiner:
         get_cell_properties(data)
 
         overview_plot(filename, data)
+
+        # optionally add floursecence data
+        data = get_fluorescence_intensity(str(filename), data, optional=False)
 
         data = add_units(data, config)
 
