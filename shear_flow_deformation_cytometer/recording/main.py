@@ -24,6 +24,11 @@ from datetime import datetime
 from shear_flow_deformation_cytometer.gui.QExtendedGraphicsView import QExtendedGraphicsView
 from qimage2ndarray import array2qimage
 
+""" some magic to prevent PyQt5 from swallowing exceptions """
+# Back up the reference to the exceptionhook
+sys._excepthook = sys.excepthook
+# Set the exception hook to our wrapping function
+sys.excepthook = lambda *args: sys._excepthook(*args)
 
 # this is the class which produces the graphs needed for histogram
 class MplCanvas(FigureCanvas):
@@ -80,6 +85,7 @@ class Camera(QtCore.QObject):
     img = None
     mounted = False
     active = True
+    is_slave = False
 
     is_recording = False
     record_do_stop = False
@@ -207,6 +213,7 @@ class Camera(QtCore.QObject):
         self.record_do_stop = False
         self.record_thread = threading.Thread(target=self.record_sequence_thread, args=(
         output_path, frame_rate, total_frame_number, sk, callback_end, callback_frame))
+        self.record_thread.start()
 
     def record_stop(self):
         self.record_do_stop = True
@@ -222,31 +229,37 @@ class Camera(QtCore.QObject):
             while current_frame_number < total_frame_number and not self.record_do_stop:
                 # grab the next frame
                 grab = self.camera.RetrieveResult(3000, pylon.TimeoutHandling_Return)
-                if grab.GrabSucceeded():
-                    # get the image and timestamp
-                    img = grab.GetArray()
-                    timestamp = grab.GetTimeStamp() / 1000000
-                    # store the first timestamp as start time
-                    if timestamp_start is None:
-                        timestamp_start = timestamp
-                    # round the timestamp to the nearest frame number
-                    frame_number = np.round((timestamp - timestamp_start) / dt + 0.5)
+                if not grab.GrabSucceeded():
+                    continue
 
-                    # if we missed some frames, fill them up with black frames
-                    while current_frame_number < frame_number and current_frame_number < total_frame_number:
-                        meta_data = {'timestamp': "nan"}
-                        tif_writer.save(np.zeros_like(img), compression=0, metadata=meta_data, contiguous=False)
-                        current_frame_number += 1
+                # get the image and timestamp
+                img = grab.GetArray()
+                timestamp = grab.GetTimeStamp() / 1000000
+                # store the first timestamp as start time
+                if timestamp_start is None:
+                    timestamp_start = timestamp
+                # round the timestamp to the nearest frame number
+                frame_number = np.round((timestamp - timestamp_start) / dt)
 
-                    # if we don't have reached the end yet, store the current frame
-                    if current_frame_number < total_frame_number:
-                        meta_data = {'timestamp': str(timestamp)}
-                        tif_writer.save(img, compression=0, metadata=meta_data, contiguous=False)
-                        current_frame_number += 1
+                # if we missed some frames, fill them up with black frames
+                while current_frame_number < frame_number and current_frame_number < total_frame_number:
+                    print("Frame", current_frame_number, "was dropped, adding an empty image.")
+                    meta_data = {'timestamp': "nan"}
+                    tif_writer.save(np.zeros_like(img), compression=0, metadata=meta_data, contiguous=False)
+                    current_frame_number += 1
 
-                    if current_frame_number % sk == 0 and callback_frame:
-                        callback_frame(img)
-                        self.display_image(img)
+                # if we don't have reached the end yet, store the current frame
+                if current_frame_number < total_frame_number:
+                    meta_data = {'timestamp': str(timestamp)}
+                    tif_writer.save(img, compression=0, metadata=meta_data, contiguous=False)
+                    current_frame_number += 1
+
+                if current_frame_number % sk == 0:
+                    if callback_frame is not None:
+                        callback_frame(current_frame_number)
+                    self.display_image(img)
+            if callback_frame is not None:
+                callback_frame(current_frame_number)
         finally:
             tif_writer.close()
             self.is_recording = False
@@ -312,6 +325,7 @@ class Camera(QtCore.QObject):
 
     # set the settings specific to the slave camera
     def set_slave(self):
+        self.is_slave = True
         self.camera.LineSelector.SetValue("Line3")
         self.camera.TriggerSelector.SetValue("FrameStart")
         self.camera.TriggerMode.SetValue("On")
@@ -510,16 +524,21 @@ class MainWindow(QtWidgets.QMainWindow):
 
         path = self.spath.text()
         Path(path).mkdir(parents=True, exist_ok=True)
+        paths = filename.path(path, ["", "_Fl", "_config.txt"])
+
+        self.conf.save(self)
+        self.conf.savein(paths[2][:-4])
+
+        self.save_note()
 
         frate = self.frate.value()
         fnum = self.fnum.value()
 
         sk = np.clip(frate // 20, 1, np.Inf)
 
-        paths = filename.path(path, ["", "_Fl"])
-        self.cameras[0].record_start(paths[0], frate, fnum, sk, self.signal_recording_finished, self.signal_recording_counter.emit)
+        self.cameras[0].record_start(paths[0], frate, fnum, sk, self.signal_recording_finished.emit, self.signal_recording_counter.emit)
         if self.cameras[1].active:
-            self.cameras[1].record_start(paths[1], frate, fnum, sk, self.signal_recording_finished)
+            self.cameras[1].record_start(paths[1], frate, fnum, sk, self.signal_recording_finished.emit)
 
     def on_recording_finished(self):
         # only when all cameras have finished
@@ -527,12 +546,8 @@ class MainWindow(QtWidgets.QMainWindow):
             if camera.active and camera.is_recording:
                 return
         # self.bar.setValue(i)
-        self.save_note()
         self.counter.setStyleSheet('color: rgb(0, 255, 0); background-color: rgb(0, 0, 0);')
 
-        conp = filename.Conpath(self.brpath)
-        self.conf.save(self)
-        self.conf.savein(conp)
         self.exTswitch.setEnabled(True)
         self.rec.setEnabled(True)
         self.rec.setStyleSheet('')

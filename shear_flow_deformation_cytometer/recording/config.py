@@ -134,6 +134,7 @@ class SetupConfig():
 			self.con.write(configfile)
 
 	def savein(self , path):
+		print("save config", path)
 		with open(path, 'w') as configfile:
 			self.con.write(configfile)	
 
