@@ -1,6 +1,9 @@
 from shear_flow_deformation_cytometer.detection.includes.pipe_helpers import *
 
 
+rounding_enabled = True
+
+
 class ProcessLoadImages:
     def __init__(self, data_storage: "JoinedDataStorage", batch_size, write_clickpoints_file=False):
         self.data_storage = data_storage
@@ -48,7 +51,7 @@ class ProcessLoadImages:
         # get the config file
         config = getConfig(filename)
         # framerate
-        dt = 1 / config["frame_rate"]
+        dt = 1 / config["frame_rate"] * 1e3
         # get the total image count
         image_count = len(reader)
 
@@ -67,6 +70,7 @@ class ProcessLoadImages:
         timestamps = []
         start_batch_index = 0
         timestamp_start = None
+        timestamp_previous = None
         log("1load_images", "read", 1, 0)
 
         # iterate over all images in the file
@@ -79,7 +83,14 @@ class ProcessLoadImages:
             if timestamp_start is None:
                 timestamp_start = timestamp
             timestamp -= timestamp_start
-            timestamp = np.round(timestamp / (dt * 1e3)) * dt * 1e3
+
+            if rounding_enabled:
+                timestamp = np.round(timestamp / dt) * dt
+
+                if timestamp_previous:
+                    if timestamp - timestamp_previous < dt * 0.9:
+                        timestamp += dt
+                timestamp_previous = timestamp
 
             if self.write_clickpoints_file:
                 cdb.setImage(filename, frame=image_index)#, timestamp=timestamp)
