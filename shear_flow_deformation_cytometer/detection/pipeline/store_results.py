@@ -95,8 +95,8 @@ class ResultCombiner:
 
         overview_plot(filename, data)
 
-        # optionally add floursecence data
-        data = get_fluorescence_intensity(str(filename), data, optional=False)
+        # optionally add fluorescence data
+        data = get_fluorescence_intensity(str(filename), data, optional=True)
 
         data = add_units(data, config)
 
