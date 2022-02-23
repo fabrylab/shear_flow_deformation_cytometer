@@ -55,10 +55,10 @@ def get_fluorescence_intensity(filename, data, optional=False):
         # calculate various statistics of these pixel values
         new_data.append(dict(
             mean_intensity=np.nanmean(cell_pixels),
-            integral_intensity=np.sum(cell_pixels),
-            max_intensity=np.max(cell_pixels),
-            percent90_intensity=np.percentile(cell_pixels, 90),
-            std_intensity=np.std(cell_pixels),
+            integral_intensity=np.nansum(cell_pixels),
+            max_intensity=np.nanmax(cell_pixels),
+            percent90_intensity=np.nanpercentile(cell_pixels, 90),
+            std_intensity=np.nanstd(cell_pixels),
         ))
     # add the new values to the dataframe and return it
     return pd.concat([data, pd.DataFrame(new_data)], axis=1)

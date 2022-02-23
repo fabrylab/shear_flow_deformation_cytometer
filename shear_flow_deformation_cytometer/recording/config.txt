@@ -9,7 +9,7 @@ imaging position after inlet = 2.9
 bioink = alginate 2 pc
 room temperature = 25 C
 cell temperature = 25 deg C
-duration = 0.4 s
+duration = 20.0 s
 
 [MICROSCOPE]
 microscope = Leica DM 6000
@@ -19,7 +19,7 @@ coupler = 0.543 x
 condensor aperture = 8
 
 [CAMERA]
-frame rate = 250 fps
+frame rate = 500 fps
 camera = Basler acA20-520
 camera pixel size = 6.9 um
 brightfield sn = 40053148
@@ -34,7 +34,7 @@ flip_y = True
 
 [BRIGHTFIELD CHANNEL]
 exposure time = 2000 us
-gain = 0
+gain = 23
 flip_x = False
 flip_y = True
 
