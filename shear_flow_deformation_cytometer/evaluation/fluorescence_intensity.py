@@ -4,12 +4,27 @@ from pathlib import Path
 import pandas as pd
 from skimage.draw import ellipse
 
-
-def get_fluo_flatfield(frames_with_cells, vidcap):
+def load_fluo_flatfield(vidcap):
     sum_frames = 0
     num_frames = 0
+    image_count = len(vidcap)
+    for image_index in range(image_count):
+        image_index = int(image_index)
+        im = vidcap.get_data(image_index)
+        num_frames = num_frames + 1
+        im_np = np.array(im, dtype=np.float32)
+        sum_frames = sum_frames + im_np
 
-    for image_index in frames_with_cells:
+    flatfield = sum_frames / num_frames
+    flatfield = flatfield / np.mean(flatfield)
+    return flatfield
+
+def get_fluo_flatfield(vidcap):
+    sum_frames = 0
+    num_frames = 0
+    image_count = len(vidcap)
+
+    for image_index in range(image_count):
         image_index = int(image_index)
         im = vidcap.get_data(image_index)
         num_frames = num_frames + 1
@@ -18,6 +33,7 @@ def get_fluo_flatfield(frames_with_cells, vidcap):
 
     flatfield_correction = sum_frames / num_frames
     flatfield_correction = flatfield_correction / np.mean(flatfield_correction)
+    #print(num_frames)
     return flatfield_correction
 
 
@@ -31,8 +47,10 @@ def get_fluorescence_intensity(filename, data, optional=False):
         return data
 
     video_reader = imageio.get_reader(video)
+    flatfield_reader = imageio.get_reader("//131.188.117.96/biophysDS2/nstroehlein/EA hy 926/2022.3.16/flatfield/2022_03_16_12_10_59_Fl.tif")
 
-    flatfield_correction = get_fluo_flatfield(data.frame, video_reader)
+    background_correction = get_fluo_flatfield(video_reader)
+    flatfield_correction = load_fluo_flatfield(flatfield_reader)
 
     im_corrected = None
     im_index = None
@@ -43,7 +61,9 @@ def get_fluorescence_intensity(filename, data, optional=False):
         if im_index != cell_data.frame:
             im_index = int(cell_data.frame)
             imm = video_reader.get_data(im_index)
-            im_corrected = imm / flatfield_correction
+            imm = imm - background_correction
+            imm[imm<0] = 0
+            im_corrected = imm/ flatfield_correction
 
         # get the pixel positions of the cell ellipse
         rr, cc = ellipse(cell_data.y, cell_data.x,
