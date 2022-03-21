@@ -141,7 +141,7 @@ def plot_density_hist(x, orientation='vertical', do_stats=True, only_kde=False, 
     ax = ax if not ax is None else plt.gca()
     from scipy import stats
     x = np.array(x)
-    x = x[~np.isnan(x)]
+    x = x[np.isfinite(x)]
     if len(x) != 0:
         kde = stats.gaussian_kde(x)
         xx = np.linspace(np.nanmin(x), np.nanmax(x), 1000)
