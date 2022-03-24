@@ -285,3 +285,5 @@ def improved_fit(data, config, plot=False):
         #plt.plot(*getFitLine(data.iloc[0].pressure, p0))
         plt.plot(data.radial_position, vel, "+")
         plt.show()
+
+    return data, [eta0, delta, tau]
