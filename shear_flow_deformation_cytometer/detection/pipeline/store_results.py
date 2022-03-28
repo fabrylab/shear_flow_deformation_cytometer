@@ -47,7 +47,6 @@ class ResultCombiner:
             del self.filenames[block["filename"]]
 
         log("6combine", "prepare", 0, block["index"])
-
     def save(self, block):
         evaluation_version = 9
         from pathlib import Path
@@ -83,7 +82,7 @@ class ResultCombiner:
         data["pressure"] = config["pressure_pa"] * 1e-5
         data.to_csv(r"\\131.188.117.96\biophysDS2\nstroehlein\bloodcells\2021.11.02\1.5 percent alginate\0.2 bar\tmp.csv")
         # apply the shear thinning velocity fit
-        data, p = improved_fit(data)
+        data, p = improved_fit(data, config)
 
         # do matching of velocities again
         try:
@@ -108,4 +107,3 @@ class ResultCombiner:
 
         with output_config_file.open("w") as fp:
             json.dump(config, fp, indent=0)
-
