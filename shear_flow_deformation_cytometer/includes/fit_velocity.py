@@ -224,7 +224,7 @@ def improved_fit(data, config, plot=False):
         res = minimize(cost, [1], method="Nelder-Mead", bounds=[(0, np.inf)])
         eta0 = res["x"][0]
         x, y = getFitLine(data.iloc[0].pressure, [eta0, delta, tau])
-        f = interp1d(x, y)
+        f = interp1d(x, y, fill_value="extrapolate")
         y2 = f(x0)
         y_true = y0
         difference = y2 - y_true
@@ -245,7 +245,7 @@ def improved_fit(data, config, plot=False):
         eta0, delta, tau = p
 
         x, y = getFitLine(data.iloc[0].pressure, [eta0, delta, tau])
-        f = interp1d(x, y)
+        f = interp1d(x, y, fill_value="extrapolate")
         y2 = f(data.radial_position)
         y_true = data.measured_velocity * 1e-3
         difference = y2 - y_true
