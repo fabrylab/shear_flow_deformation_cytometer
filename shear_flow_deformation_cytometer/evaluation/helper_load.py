@@ -94,6 +94,8 @@ def get_meta(filename: path_string, cached_meta_files: dict = None):
             yaml_file = Path(str(filename).replace(".tif", "_meta.yaml"))
         elif str(filename).endswith("_evaluated_new.csv"):
             yaml_file = Path(str(filename).replace("_evaluated_new.csv", "_meta.yaml"))
+        elif str(filename).endswith("_evaluated.csv"):
+            yaml_file = Path(str(filename).replace("_evaluated.csv", "_meta.yaml"))
         else:
             yaml_file = filename / "meta.yaml"
 
