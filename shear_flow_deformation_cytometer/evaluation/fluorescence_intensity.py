@@ -4,6 +4,8 @@ from pathlib import Path
 import pandas as pd
 from skimage.draw import ellipse
 
+leave_black_spots_out = True
+
 def load_fluo_flatfield(vidcap):
     sum_frames = 0
     num_frames = 0
@@ -47,10 +49,11 @@ def get_fluorescence_intensity(filename, data, optional=False):
         return data
 
     video_reader = imageio.get_reader(video)
-    flatfield_reader = imageio.get_reader("//131.188.117.96/biophysDS2/nstroehlein/EA hy 926/2022.3.16/flatfield/2022_03_16_12_10_59_Fl.tif")
+    #flatfield_reader = imageio.get_reader("//131.188.117.96/biophysDS/khast/2022.3.17/flatfield/2022_03_17_10_43_09_Fl.tif")
 
-    background_correction = get_fluo_flatfield(video_reader)
-    flatfield_correction = load_fluo_flatfield(flatfield_reader)
+    flat_correction = get_fluo_flatfield(video_reader)
+    #print(np.mean(flat_correction), np.median(flat_correction))
+    #flatfield_correction = load_fluo_flatfield(flatfield_reader)
 
     im_corrected = None
     im_index = None
@@ -61,25 +64,37 @@ def get_fluorescence_intensity(filename, data, optional=False):
         if im_index != cell_data.frame:
             im_index = int(cell_data.frame)
             imm = video_reader.get_data(im_index)
-            imm = imm - background_correction
-            imm[imm<0] = 0
-            im_corrected = imm/ flatfield_correction
-
+            #imm = imm - background_correction
+            #imm[imm<0] = 0
+            #im_corrected = imm/ flatfield_correction
+            im_corrected = imm / flat_correction
+            if leave_black_spots_out == True:
+                im_corrected= np.ma.masked_where(flat_correction < np.median(flat_correction), im_corrected)
+                #im_corrected =  mask_black_spots.data
         # get the pixel positions of the cell ellipse
         rr, cc = ellipse(cell_data.y, cell_data.x,
                          cell_data.short_axis_px / 2, cell_data.long_axis_px / 2,
                          rotation=-cell_data.angle * np.pi / 180)
         # and get the pixel values
+        #cell_pixels1 = im_corrected1[rr, cc]
         cell_pixels = im_corrected[rr, cc]
+        #print(cell_pixels, cell_pixels1)
+        #cell_pixels = cell_pixels.compressed()
+        #print(cell_pixels1)
+        #print(cell_pixels)
 
         # calculate various statistics of these pixel values
-        new_data.append(dict(
-            mean_intensity=np.nanmean(cell_pixels),
-            integral_intensity=np.nansum(cell_pixels),
-            max_intensity=np.nanmax(cell_pixels),
-            percent90_intensity=np.nanpercentile(cell_pixels, 90),
-            std_intensity=np.nanstd(cell_pixels),
-        ))
+        black_spot_inside = np.ma.is_masked(cell_pixels)
+        if black_spot_inside == False:
+            new_data.append(dict(
+                mean_intensity= cell_pixels.mean(), #np.nanmean(cell_pixels),
+                integral_intensity= cell_pixels.sum(), #np.nansum(cell_pixels),
+                max_intensity= cell_pixels.max(), #np.nanmax(cell_pixels),
+                #percent90_intensity= #np.nanpercentile(cell_pixels, 90),
+                std_intensity= cell_pixels.std() ,#np.nanstd(cell_pixels),
+            ))
+        else:
+            continue
     # add the new values to the dataframe and return it
     return pd.concat([data, pd.DataFrame(new_data)], axis=1)
 
