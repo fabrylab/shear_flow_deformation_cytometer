@@ -63,6 +63,7 @@ def get_fluorescence_intensity(filename, data, optional=False):
         # get the image if it is not the same as from the last cell
         if im_index != cell_data.frame:
             im_index = int(cell_data.frame)
+            #print(im_index)
             imm = video_reader.get_data(im_index)
             #imm = imm - background_correction
             #imm[imm<0] = 0
@@ -85,7 +86,9 @@ def get_fluorescence_intensity(filename, data, optional=False):
 
         # calculate various statistics of these pixel values
         black_spot_inside = np.ma.is_masked(cell_pixels)
+        #print(index, black_spot_inside)
         if black_spot_inside == False:
+            #print(cell_pixels.mean())
             new_data.append(dict(
                 mean_intensity= cell_pixels.mean(), #np.nanmean(cell_pixels),
                 integral_intensity= cell_pixels.sum(), #np.nansum(cell_pixels),
@@ -94,7 +97,13 @@ def get_fluorescence_intensity(filename, data, optional=False):
                 std_intensity= cell_pixels.std() ,#np.nanstd(cell_pixels),
             ))
         else:
-            continue
+            new_data.append(dict(
+                mean_intensity= None,  # np.nanmean(cell_pixels),
+                integral_intensity= None,  # np.nansum(cell_pixels),
+                max_intensity= None,  # np.nanmax(cell_pixels),
+                # percent90_intensity= #np.nanpercentile(cell_pixels, 90),
+                std_intensity= None,  # np.nanstd(cell_pixels),
+            ))
     # add the new values to the dataframe and return it
     return pd.concat([data, pd.DataFrame(new_data)], axis=1)
 
