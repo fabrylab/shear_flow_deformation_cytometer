@@ -50,3 +50,10 @@ for filename, d in data.groupby("filename"):
 aggregated_data = data.groupby("filename").apply(get2Dhist_k_alpha_err)
 print(aggregated_data)
 ```
+
+## Citing the methods
+If you use this software for a project that results in a publication we encourage you to cite our publication:
+
+Richard Gerum Elham Mirzahossein Mar Eroles Jennifer Elsterer Astrid Mainka Andreas Bauer Selina Sonntag Alexander Winterl Johannes Bartl Lena Fischer Shada Abuhattum Ruchi Goswami Salvatore Girardo Jochen Guck Stefan Schrüfer Nadine Ströhlein Mojtaba Nosratlo Harald Herrmann Dorothea Schultheis Felix Rico Sebastian Johannes Müller Stephan Gekle Ben Fabry (2022) **Viscoelastic properties of suspended cells measured with shear flow deformation cytometry**
+*eLife* 11:e78823.
+https://doi.org/10.7554/eLife.78823
