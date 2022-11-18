@@ -192,7 +192,7 @@ def getFitXYDot(config, pressure, p, count=1000):
 
 
 def improved_fit(data, config, plot=False):
-    curve_height = np.mean(data.query("-5 < radial_position < 5").measured_velocity) * 1e-3
+    curve_height = np.nanmedian(data.query("-5 < radial_position < 5").measured_velocity) * 1e-3
 
     x0 = np.array(data.radial_position)
     y0 = np.array(data.measured_velocity * 1e-3)
@@ -243,6 +243,9 @@ def improved_fit(data, config, plot=False):
 
     def getCostAll(p):
         eta0, delta, tau = p
+        # to enforce the boundary conditions
+        if eta0 < 0 or delta < 0 or tau < 0 or delta > 0.9:
+            return np.inf
 
         x, y = getFitLine(data.iloc[0].pressure, [eta0, delta, tau])
         f = interp1d(x, y, fill_value="extrapolate")
@@ -251,7 +254,10 @@ def improved_fit(data, config, plot=False):
         difference = y2 - y_true
 
         #error = np.sqrt(np.sum(difference**2))
-        error = np.sum(np.abs(difference)**2)
+        #error = np.sum(np.abs(difference)**2)
+        c = np.abs(difference)
+        c = np.clip(c, 0, np.percentile(c, 95))
+        error = np.sum(c)
         return error
 
     res = minimize(getCostAll, [eta0, delta, tau], method="Nelder-Mead", bounds=[(0, np.inf), (0, 0.9), (0, np.inf)])
@@ -276,11 +282,14 @@ def improved_fit(data, config, plot=False):
     data["tau"] = tau
 
     if plot:
+        plt.cla()
         def getFitLine(pressure, p):
         #    config = {"channel_length_m": 5.8e-2, "channel_width_m": 186e-6}
             x, y = getFitXY(config, np.mean(pressure), p)
             return x * 1e+6, y
         plt.plot(x0, y0, "o")
+        plt.axhline(curve_height)
+        plt.plot(data.query("-5 < radial_position < 5").radial_position, data.query("-5 < radial_position < 5").measured_velocity * 1e-3, "+")
         plt.plot(*getFitLine(data.iloc[0].pressure, [eta0, delta, tau]))
         #plt.plot(*getFitLine(data.iloc[0].pressure, p0))
         plt.plot(data.radial_position, vel, "+")
