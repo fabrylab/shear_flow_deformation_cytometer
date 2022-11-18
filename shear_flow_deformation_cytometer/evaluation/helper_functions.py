@@ -131,7 +131,7 @@ def correctCenter_old(data, config):
     # data["imaging_pos_mm"] = config["imaging_pos_mm"]
 
 
-def corretCenter(data, config):
+def correctCenter(data, config):
     # remove nans
     d = data[np.isfinite(data.measured_velocity)]
     # remove outlier points
