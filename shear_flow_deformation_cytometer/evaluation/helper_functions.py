@@ -104,7 +104,7 @@ def fit_func_velocity_gradient(config):
     return getVelGrad
 
 
-def correctCenter(data, config):
+def correctCenter_old(data, config):
     # remove nans
     d = data[np.isfinite(data.measured_velocity)]
     # remove outlier points
@@ -129,6 +129,43 @@ def correctCenter(data, config):
     # data["velocity_gradient"] = fit_func_velocity_gradient(config)(data.radial_position)
     # data["velocity_fitted"] = fit_func_velocity(config)(data.radial_position)
     # data["imaging_pos_mm"] = config["imaging_pos_mm"]
+
+
+def corretCenter(data, config):
+    # remove nans
+    d = data[np.isfinite(data.measured_velocity)]
+    # remove outlier points
+    d = d[d.measured_velocity < np.nanpercentile(d.measured_velocity, 95) * 1.5]
+    d = d[d.measured_velocity > 0]
+
+    y_pos = d.radial_position
+    vel = d.measured_velocity
+    x, y = y_pos, vel
+
+    def bin_median(offset):
+        bin = np.round(x + offset).astype(int)
+        cost = 0
+        for b in np.unique(bin):
+            y1 = np.median(y[bin == b])
+            y2 = np.median(y[bin == -b])
+            # plt.plot(b, y1, "o")
+            # plt.plot(b, y2, "d")
+            if not np.isnan(y2):
+                # plt.plot([b, b], [y1, y2], "-")
+                if b < 0:
+                    cost -= y2 - y1
+                else:
+                    cost += y2 - y1
+                # print(np.abs(y2-y1))
+        # plt.plot(x+offset, y, "+")
+        # plt.plot(-(x+offset), y, "+")
+        return cost
+
+    offsets = np.arange(-10, 10, 0.1)
+    costs = [bin_median(x) for x in offsets]
+    best_offset = offsets[np.argmin(np.abs(costs))]
+
+    data.radial_position += best_offset
 
 
 def bootstrap_error(data, func=np.median, repetitions=1000):
