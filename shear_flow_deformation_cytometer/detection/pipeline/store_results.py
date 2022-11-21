@@ -80,7 +80,7 @@ class ResultCombiner:
 
         data["area"] = data.long_axis * data.short_axis * np.pi
         data["pressure"] = config["pressure_pa"] * 1e-5
-        data.to_csv(r"\\131.188.117.96\biophysDS2\nstroehlein\bloodcells\2021.11.02\1.5 percent alginate\0.2 bar\tmp.csv")
+        #data.to_csv(r"\\131.188.117.96\biophysDS2\nstroehlein\bloodcells\2021.11.02\1.5 percent alginate\0.2 bar\tmp.csv")
         # apply the shear thinning velocity fit
         data, p = improved_fit(data, config)
 

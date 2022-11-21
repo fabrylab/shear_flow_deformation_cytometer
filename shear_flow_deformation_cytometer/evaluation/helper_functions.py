@@ -143,7 +143,7 @@ def correctCenter(data, config):
     x, y = y_pos, vel
 
     def bin_median(offset):
-        bin = np.round(x + offset).astype(int)
+        bin = (np.round((x + offset)/5)*5).astype(int)
         cost = 0
         for b in np.unique(bin):
             y1 = np.median(y[bin == b])
@@ -161,9 +161,37 @@ def correctCenter(data, config):
         # plt.plot(-(x+offset), y, "+")
         return cost
 
-    offsets = np.arange(-10, 10, 0.1)
+    def bin_median_plot(offset):
+        bin = (np.round((x + offset)/5)*5).astype(int)
+        cost = 0
+        for b in np.unique(bin):
+            y1 = np.median(y[bin == b])
+            y2 = np.median(y[bin == -b])
+            plt.plot(b, y1, "o")
+            plt.plot(b, y2, "d")
+            if not np.isnan(y2):
+                plt.plot([b, b], [y1, y2], "-")
+                if b < 0:
+                    cost -= y2 - y1
+                else:
+                    cost += y2 - y1
+                print(np.abs(y2-y1))
+        plt.plot(x+offset, y, "+")
+        plt.plot(-(x+offset), y, "+")
+        return cost
+
+    offsets = np.arange(-30, 30, 0.1)
     costs = [bin_median(x) for x in offsets]
     best_offset = offsets[np.argmin(np.abs(costs))]
+    if 0:
+        plt.subplot(121)
+        plt.plot(offsets, costs)
+        plt.axvline(best_offset)
+        plt.axhline(np.min(np.abs(costs)))
+        plt.subplot(122)
+        plt.plot(data.radial_position, data.measured_velocity)
+
+        plt.show()
 
     data.radial_position += best_offset
 

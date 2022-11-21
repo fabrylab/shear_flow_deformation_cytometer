@@ -196,9 +196,9 @@ def improved_fit(data, config, plot=False):
 
     x0 = np.array(data.radial_position)
     y0 = np.array(data.measured_velocity * 1e-3)
-    i = np.isfinite(x0) * np.isfinite(y0)
-    x0 = x0[i]
-    y0 = y0[i]
+    include_indices = np.isfinite(x0) * np.isfinite(y0)
+    x0 = x0[include_indices]
+    y0 = y0[include_indices]
 
     config = {"channel_length_m": 5.8e-2, "channel_width_m": 186e-6}
 
@@ -288,11 +288,12 @@ def improved_fit(data, config, plot=False):
             x, y = getFitXY(config, np.mean(pressure), p)
             return x * 1e+6, y
         plt.plot(x0, y0, "o")
+        plt.plot(-x0, y0, "o")
         plt.axhline(curve_height)
         plt.plot(data.query("-5 < radial_position < 5").radial_position, data.query("-5 < radial_position < 5").measured_velocity * 1e-3, "+")
         plt.plot(*getFitLine(data.iloc[0].pressure, [eta0, delta, tau]))
         #plt.plot(*getFitLine(data.iloc[0].pressure, p0))
-        plt.plot(data.radial_position, vel, "+")
+        plt.plot(data.radial_position[include_indices], vel[include_indices], "+")
         plt.show()
 
     return data, [eta0, delta, tau]
