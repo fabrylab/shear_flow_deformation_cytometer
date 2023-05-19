@@ -38,12 +38,16 @@ def batch_iterator(reader, batch_size, preprocess):
             yield batch_images[:len(batch_image_indices)], batch_image_indices
             batch_image_indices = []
 
-def getTimestamp(vidcap, image_index):
+def getTimestamp(vidcap, image_index, dt):
     if image_index >= len(vidcap):
         image_index = len(vidcap) - 1
-    if vidcap.get_meta_data(image_index)['description']:
-        return json.loads(vidcap.get_meta_data(image_index)['description'])['timestamp']
-    return "0"
+    try:
+        if vidcap.get_meta_data(image_index)['description']:
+            return json.loads(vidcap.get_meta_data(image_index)['description'])['timestamp']
+    except KeyError:
+        pass
+    # if there is no timestamp information just use the delta t from the framerate
+    return dt * image_index
 
 def getRawVideo(filename):
     filename, ext = os.path.splitext(filename)

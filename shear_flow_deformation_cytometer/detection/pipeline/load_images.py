@@ -79,7 +79,7 @@ class ProcessLoadImages:
             if len(im.shape) == 3:
                 im = im[:, :, 0]
             # get the timestamp from the file
-            timestamp = float(getTimestamp(reader, image_index))
+            timestamp = float(getTimestamp(reader, image_index, dt))
             if timestamp_start is None:
                 timestamp_start = timestamp
             timestamp -= timestamp_start
