@@ -70,6 +70,10 @@ class ResultCombiner:
 
         config = file["config"]
 
+        # warn if there are not cells found
+        if len(data) == 0:
+            raise ValueError("no cells have been found.")
+
         # find the center of the channel with a rough velocity fit
         correctCenter(data, config)
 
