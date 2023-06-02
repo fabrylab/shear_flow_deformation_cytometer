@@ -70,7 +70,7 @@ class ResultCombiner:
 
         config = file["config"]
 
-        # warn if there are not cells found
+        # warn if no cells have been found
         if len(data) == 0:
             raise ValueError("no cells have been found.")
 

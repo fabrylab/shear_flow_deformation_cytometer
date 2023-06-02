@@ -1,3 +1,5 @@
+import tifffile
+
 from shear_flow_deformation_cytometer.detection.includes.pipe_helpers import *
 
 
@@ -44,6 +46,7 @@ class ProcessLoadImages:
         # open the image reader
         #reader = reader2(imageio.get_reader(copy_of_file or filename))
         try:
+            reader_tiff = tifffile.TiffReader(copy_of_file or filename).pages
             reader = imageio.get_reader(copy_of_file or filename)
         except Exception as err:
             print(err, file=sys.stderr)
@@ -53,7 +56,7 @@ class ProcessLoadImages:
         # framerate
         dt = 1 / config["frame_rate"] * 1e3
         # get the total image count
-        image_count = len(reader)
+        image_count = len(reader_tiff)
 
         if self.write_clickpoints_file:
             import clickpoints
@@ -74,7 +77,8 @@ class ProcessLoadImages:
         log("1load_images", "read", 1, 0)
 
         # iterate over all images in the file
-        for image_index, im in enumerate(reader):
+        for image_index, im in enumerate(reader_tiff):
+            im = im.asarray()
             # ensure image has only one channel
             if len(im.shape) == 3:
                 im = im[:, :, 0]
