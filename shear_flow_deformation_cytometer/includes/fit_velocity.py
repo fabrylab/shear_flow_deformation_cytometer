@@ -200,7 +200,7 @@ def improved_fit(data, config, plot=False):
     x0 = x0[include_indices]
     y0 = y0[include_indices]
 
-    config = {"channel_length_m": 5.8e-2, "channel_width_m": 186e-6}
+    #config = {"channel_length_m": 5.8e-2, "channel_width_m": 186e-6}
 
     def getFitLine(pressure, p):
         #config = {"channel_length_m": 5.8e-2, "channel_width_m": 186e-6}
