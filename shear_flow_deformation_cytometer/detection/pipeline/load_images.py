@@ -3,7 +3,7 @@ import tifffile
 from shear_flow_deformation_cytometer.detection.includes.pipe_helpers import *
 
 
-rounding_enabled = True
+rounding_enabled = False
 
 
 class ProcessLoadImages:
@@ -62,7 +62,6 @@ class ProcessLoadImages:
             import clickpoints
             cdb = clickpoints.DataFile(filename[:-4]+".cdb", "w")
             cdb.setMaskType("prediction", color="#FF00FF", index=1)
-
         yield dict(filename=filename, index=-1, type="start", image_count=image_count)
         log("1load_images", "prepare", 0)
 
@@ -126,7 +125,6 @@ class ProcessLoadImages:
         reader.close()
         if copy_of_file is not None:
             copy_of_file.unlink()
-
         yield dict(filename=filename, index=image_count, type="end")
 
 

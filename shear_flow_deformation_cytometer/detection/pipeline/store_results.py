@@ -45,7 +45,6 @@ class ResultCombiner:
             #    print(err, file=sys.stderr)
             file["progressbar"].close()
             del self.filenames[block["filename"]]
-
         log("6combine", "prepare", 0, block["index"])
     def save(self, block):
         evaluation_version = 9
@@ -97,7 +96,7 @@ class ResultCombiner:
 
         get_cell_properties(data)
 
-        overview_plot(filename, data)
+        overview_plot(filename, data, config)
 
         # optionally add fluorescence data
         data = get_fluorescence_intensity(str(filename), data, optional=True)

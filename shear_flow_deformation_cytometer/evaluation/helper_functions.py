@@ -116,7 +116,6 @@ def correctCenter_old(data, config):
 
     if len(vel) == 0:
         raise ValueError("No velocity values found.")
-
     vel_fit, pcov = curve_fit(fit_func_velocity(config), y_pos, vel,
                               [np.nanpercentile(vel, 95), 3, -np.mean(y_pos)])  # fit a parabolic velocity profile
     y_pos += vel_fit[2]
@@ -386,6 +385,7 @@ def get2Dhist_k_alpha_err(data, bootstrap_repetitions=10):
     from scipy import stats
     x = np.array(data[["k", "alpha"]]).T
     x[0] = np.log10(x[0])
+    x = x.T[~np.logical_or(np.isinf(x), np.isnan(x)).any(axis=0)].T
 
     def get_mode(x):
         kde = stats.gaussian_kde(x)

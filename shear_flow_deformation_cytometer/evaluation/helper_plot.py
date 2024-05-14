@@ -7,17 +7,23 @@ from shear_flow_deformation_cytometer.evaluation.helper_functions import bootstr
 from shear_flow_deformation_cytometer.includes.fit_velocity import getFitXY
 
 
-def plot_density_scatter(x, y, cmap='viridis', alpha=1, skip=1, y_factor=1, s=5, levels=None, loglog=False, ax=None):
+def plot_density_scatter(x, y, cmap='viridis', alpha=1, skip=1, y_factor=1, s=5, levels=None, logx=False, logy=False, ax=None):
     ax = plt.gca() if ax is None else ax
     x = np.array(x)[::skip]
     y = np.array(y)[::skip]
     filter = ~np.isnan(x) & ~np.isnan(y)
-    if loglog is True:
-        filter &= (x > 0) & (y > 0)
+    if logx is True:
+        filter &= (x>0)
+    if logy is True:
+        filter &= (y>0)
     x = x[filter]
     y = y[filter]
-    if loglog is True:
+    if logx is True and logy is True:
         xy = np.vstack([np.log10(x), np.log10(y)])
+    elif logx is True:
+        xy = np.vstack([np.log10(x),y])
+    elif logy is True:
+        xy = np.vstack([x, np.log10(y)])
     else:
         xy = np.vstack([x, y * y_factor])
     try:
@@ -36,8 +42,12 @@ def plot_density_scatter(x, y, cmap='viridis', alpha=1, skip=1, y_factor=1, s=5,
         Z = kde(XY.reshape(-1, 2).T).reshape(XY.shape[:2])
         ax.contour(X, Y, Z, levels=1)
 
-    if loglog is True:
+    if logx is True and logy is True:
         ax.loglog()
+    elif logx is True:
+        ax.set_xscale('log')
+    elif logy is True:
+        ax.set_yscale('log')
     return ax
 
 
@@ -108,9 +118,10 @@ def all_plots_same_limits():
         ax.set_ylim(ymin, ymax)
 
 
-def plot_velocity_fit(data, color=None, parameters=None, color_fit="k"):
+def plot_velocity_fit(data, config, color=None, parameters=None, color_fit="k"):
     def getFitLine(pressure, p):
-        config = {"channel_length_m": 5.8e-2, "channel_width_m": 186e-6}
+        #config = {"channel_length_m": 5.8e-2, "channel_width_m": 186e-6}
+        #config = {'channel_width_m': 0.00019001261833616293, 'channel_length_m': 0.057999999999999996,}
         x, y = getFitXY(config, np.mean(pressure), p)
         return x, y
 

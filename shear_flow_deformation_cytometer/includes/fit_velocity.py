@@ -291,9 +291,9 @@ def improved_fit(data, config, plot=False):
         plt.plot(-x0, y0, "o")
         plt.axhline(curve_height)
         plt.plot(data.query("-5 < radial_position < 5").radial_position, data.query("-5 < radial_position < 5").measured_velocity * 1e-3, "+")
-        plt.plot(*getFitLine(data.iloc[0].pressure, [eta0, delta, tau]))
+        plt.plot(*getFitLine(data.iloc[0].pressure, [eta0, delta, tau]),label='Fit line')
         #plt.plot(*getFitLine(data.iloc[0].pressure, p0))
         plt.plot(data.radial_position[include_indices], vel[include_indices], "+")
+        plt.legend()
         plt.show()
-
     return data, [eta0, delta, tau]

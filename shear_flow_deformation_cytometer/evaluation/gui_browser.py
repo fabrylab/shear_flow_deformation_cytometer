@@ -230,7 +230,7 @@ class MeasurementPlot(QtWidgets.QWidget):
                 return np.real(G), np.imag(G)
 
             plt.subplot(3, 3, 1)
-            plot_velocity_fit(data)
+            plot_velocity_fit(data,config)
             plt.text(0, 0, f"eta0: {data.iloc[0].eta0:.2f}\ntau: {data.iloc[0].tau:.4f}\ndelta: {data.iloc[0].delta:.3f}", ha="left", va="bottom")
 
             if "tt_r2" in data:

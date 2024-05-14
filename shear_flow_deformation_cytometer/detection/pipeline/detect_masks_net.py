@@ -18,12 +18,9 @@ class ProcessDetectMasksBatch:
         self.write_clickpoints_masks = write_clickpoints_masks
 
     def __call__(self, block):
-        import time
-        predict_start_first = time.time()
         from shear_flow_deformation_cytometer.detection.includes.UNETmodel import UNet
         import numpy as np
         from shear_flow_deformation_cytometer.detection.includes.regionprops import preprocess, getTimestamp
-
         if block["type"] == "start" or block["type"] == "end":
             yield block
             return
@@ -50,12 +47,9 @@ class ProcessDetectMasksBatch:
 
         # predict cell masks from the image batch
         im_batch = preprocess(data_storage_numpy)
-        import time
-        predict_start = time.time()
         import tensorflow as tf
         with tf.device('/GPU:0'):
             prediction_mask_batch = self.unet.predict(im_batch[:, :, :, None])[:, :, :, 0] > 0.5
-        dt = time.time() - predict_start
         data_storage_mask_numpy[:] = prediction_mask_batch
 
         if self.write_clickpoints_masks:
@@ -67,6 +61,5 @@ class ProcessDetectMasksBatch:
 
 
         block["config"].update({"network": self.network_weights})
-
         log("2detect", "prepare", 0, block["index"])
         yield block

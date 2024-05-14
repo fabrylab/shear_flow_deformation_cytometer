@@ -10,8 +10,6 @@ class ProcessFindCells:
         self.hollow_masks = hollow_masks
 
     def __call__(self, block):
-        import time
-        predict_start_first = time.time()
         import pandas as pd
         from pathlib import Path
         from shear_flow_deformation_cytometer.detection.includes.regionprops import mask_to_cells_edge, mask_to_cells_edge2
