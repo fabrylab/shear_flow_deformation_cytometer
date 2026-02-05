@@ -265,7 +265,7 @@ def get_cell_properties(data):
         data["tt_epsilon"] = epsilon
 
     def func(x, a, b):
-        return x / 2 * 1 / (1 + a * x ** b)
+        return x / 2 * 1 / (1 + (a * x) ** b)
 
     x = [0.113, 0.45]
 
@@ -468,7 +468,7 @@ def stress_strain_fit(data, k_cell, alpha_cell):
     pressure = data.iloc[0].pressure
 
     def func(x, a, b):
-        return x / 2 * 1 / (1 + a * x ** b)
+        return x / 2 * 1 / (1 + (a * x) ** b)
 
     def getFitLine(pressure, p):
         config = {"channel_length_m": 5.8e-2, "channel_width_m": 186e-6}
