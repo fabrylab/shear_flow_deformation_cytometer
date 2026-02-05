@@ -161,7 +161,7 @@ def convert_old_csv_to_new(data, config):
     data2["tt_epsilon"] = data.epsilon
     if "omega_weissenberg" not in data:
         def func(x, a, b):
-            return x / 2 * 1 / (1 + a * x ** b)
+            return x / 2 * 1 / (1 + (a * x) ** b)
 
         x = [0.113, 0.45]
 
